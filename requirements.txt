@@ -22,3 +22,11 @@ deepeval
 gradio
 uuid
 datetime
+crewai-tools[mcp]
+fastmcp
+agentops
+docling
+asyncio
+langchain-mcp-adapters 
+langgraph 
+langsmith
