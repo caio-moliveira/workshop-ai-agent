@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/your-logo-id" alt="Jornada de Dados" width="200"/>
+  <img src="https://github.com/caio-moliveira/workshop-ai-agent/tree/main/assets/jornada.png" alt="Jornada de Dados" width="200"/>
   
   # Workshop: Agentes de IA com Python
   
