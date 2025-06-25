@@ -1,0 +1,18 @@
+# Framework dependencies
+agno
+crewai
+pyautogen
+langgraph
+langchain
+langchain-community
+langchain-ollama
+
+# LLM and AI
+ollama
+openai
+python-dotenv
+
+# Utilities
+requests
+pytz
+datetime

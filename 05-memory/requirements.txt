@@ -1,0 +1,23 @@
+# AI Frameworks
+crewai
+langchain
+langchain-community
+langchain-core
+langchain-ollama
+langchain-openai
+
+# LLMs
+openai
+ollama
+
+# Memory Storage
+chromadb
+
+# Web Interface
+gradio
+
+# Environment
+python-dotenv
+
+# Utilities
+sqlite3

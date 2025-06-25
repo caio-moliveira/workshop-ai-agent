@@ -1,6 +1,14 @@
+# LangChain and LLM
 langchain
 langchain-ollama
 langchain-openai
 langchain-core
+
+# Web interface
 streamlit
+
+# PDF processing
 pymupdf
+
+# Environment
+python-dotenv

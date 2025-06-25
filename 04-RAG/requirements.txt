@@ -1,0 +1,24 @@
+# LangChain ecosystem
+langchain
+langchain-community
+langchain-ollama
+langchain-openai
+langchain-core
+
+# Vector store and embeddings
+faiss-cpu
+ollama
+
+# Document processing
+pymupdf
+pypdf
+
+# RAG evaluation
+deepeval
+
+# Environment
+python-dotenv
+
+# Utilities
+numpy
+requests
