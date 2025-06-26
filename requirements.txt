@@ -11,6 +11,7 @@ langchain
 litellm 
 langchain-community 
 langchain_openai
+langchain-chroma
 geopy
 langchain-ollama
 autogen
@@ -30,3 +31,4 @@ asyncio
 langchain-mcp-adapters 
 langgraph 
 langsmith
+tiktoken

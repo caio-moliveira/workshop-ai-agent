@@ -1,138 +1,145 @@
-#!/usr/bin/env python3
-"""
-RAG Step 2: Text Chunking
-Learn how to split large documents into smaller, manageable pieces
-"""
+# ================================
+# CHUNKING: CHARACTERS VS TOKENS
+# ================================
 
-import os
+from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+import tiktoken
+
+# Initialize tokenizer for counting tokens
+tokenizer = tiktoken.get_encoding("cl100k_base")  # GPT-3.5/4 tokenizer
 
 
-def replace_t_with_space(list_of_documents):
-    """Clean text by replacing tab characters with spaces"""
-    for doc in list_of_documents:
-        doc.page_content = doc.page_content.replace("\t", " ")
-    return list_of_documents
+def count_tokens(text):
+    return len(tokenizer.encode(text))
 
 
-def step2_chunk_text(documents, chunk_size=1000, chunk_overlap=200):
-    """
-    Step 2: Text Chunking
+# ================================
+# EXAMPLE 1: Character-based Chunking (Default)
+# ================================
 
-    This step demonstrates:
-    - Why we need to chunk text
-    - Chunk size and overlap parameters
-    - Text cleaning
-    """
-    print("✂️  STEP 2: Text Chunking")
-    print("=" * 40)
+loader = PyPDFLoader("04-RAG/data/Understanding_Climate_Change.pdf")
+docs = loader.load()
 
-    print("🔧 Chunking parameters:")
-    print(f"   Chunk size: {chunk_size} characters")
-    print(f"   Chunk overlap: {chunk_overlap} characters")
-    print(f"   Overlap ratio: {chunk_overlap / chunk_size:.1%}")
+# Default splitter - splits by paragraphs (\n\n)
+default_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
+default_chunks = default_splitter.split_documents(docs)
 
-    # Create text splitter
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size, chunk_overlap=chunk_overlap, length_function=len
+print("=== DEFAULT SPLITTER (separator='\\n\\n') ===")
+print("This splits by PARAGRAPHS, not by exact character count!")
+print("Chunk size setting: 1000 characters")
+print(f"Number of chunks: {len(default_chunks)}")
+
+chunk_sizes = [len(chunk.page_content) for chunk in default_chunks]
+token_counts = [count_tokens(chunk.page_content) for chunk in default_chunks]
+
+print(f"Actual chunk sizes (chars): {chunk_sizes[:5]}...")
+print(f"Actual chunk sizes (tokens): {token_counts[:5]}...")
+print(f"Average size: {sum(chunk_sizes) / len(chunk_sizes):.0f} characters")
+print(f"Average tokens: {sum(token_counts) / len(token_counts):.0f} tokens")
+
+# ================================
+# EXAMPLE 2: How It Actually Works
+# ================================
+
+print("\n=== HOW IT WORKS ===")
+print("1. Split text by separator (\\n\\n by default)")
+print("2. Group paragraphs until reaching ~1000 characters")
+print("3. If a single paragraph > 1000 chars, keep it whole")
+print("4. That's why chunks can be much larger than 1000!")
+
+# Show first chunk content
+print(
+    f"\nFirst chunk ({len(default_chunks[0].page_content)} chars, {count_tokens(default_chunks[0].page_content)} tokens):"
+)
+print(default_chunks[0].page_content[:300] + "...")
+
+# ================================
+# EXAMPLE 3: Different Separators
+# ================================
+
+# Split by single newlines (sentences/lines)
+line_splitter = CharacterTextSplitter(separator="\n", chunk_size=1000, chunk_overlap=0)
+line_chunks = line_splitter.split_documents(docs)
+
+# Split by periods (sentences)
+sentence_splitter = CharacterTextSplitter(
+    separator=". ", chunk_size=1000, chunk_overlap=0
+)
+sentence_chunks = sentence_splitter.split_documents(docs)
+
+print("\n=== DIFFERENT SEPARATORS ===")
+print(f"By paragraphs (\\n\\n): {len(default_chunks)} chunks")
+print(f"By lines (\\n): {len(line_chunks)} chunks")
+print(f"By sentences ('. '): {len(sentence_chunks)} chunks")
+
+# ================================
+# EXAMPLE 4: Force Split at Exact Size
+# ================================
+
+# This will split at EXACTLY 1000 characters
+exact_splitter = CharacterTextSplitter(
+    separator="",  # Split by individual characters
+    chunk_size=1000,
+    chunk_overlap=0,
+)
+exact_chunks = exact_splitter.split_documents(docs)
+
+print("\n=== EXACT CHARACTER SPLITTING ===")
+print("Using separator='' forces exact character count")
+print(f"Number of chunks: {len(exact_chunks)}")
+
+exact_sizes = [len(chunk.page_content) for chunk in exact_chunks]
+print(f"Chunk sizes: {exact_sizes[:5]}...")
+print("Notice: All chunks are exactly 1000 characters (except last)")
+
+# ================================
+# EXAMPLE 5: What Happens with Large Paragraphs
+# ================================
+
+print("\n=== LARGE PARAGRAPH EXAMPLE ===")
+
+# Create a sample document with one very long paragraph
+sample_text = "This is a very long paragraph. " * 100  # ~3000 characters
+sample_doc = type("Document", (), {"page_content": sample_text, "metadata": {}})()
+
+# Try to split it
+para_splitter = CharacterTextSplitter(separator="\n\n", chunk_size=1000)
+para_result = para_splitter.split_documents([sample_doc])
+
+print(f"Original text: {len(sample_text)} characters")
+print("Chunk size setting: 1000 characters")
+print(f"Result: {len(para_result)} chunk(s)")
+print(f"Actual chunk size: {len(para_result[0].page_content)} characters")
+print("Reason: No \\n\\n found, so entire text becomes one chunk!")
+
+# ================================
+# EXAMPLE 6: Pages vs Chunks
+# ================================
+
+print("\n=== PAGES VS CHUNKS ===")
+print(f"PDF pages loaded: {len(docs)}")
+print(f"Chunks created: {len(default_chunks)}")
+print(f"Ratio: {len(default_chunks) / len(docs):.1f} chunks per page")
+
+# Show which page each chunk comes from
+print("\nChunk sources:")
+for i, chunk in enumerate(default_chunks[:5]):
+    page_num = chunk.metadata.get("page", "Unknown")
+    char_count = len(chunk.page_content)
+    token_count = count_tokens(chunk.page_content)
+    print(
+        f"Chunk {i + 1}: Page {page_num}, {char_count} characters, {token_count} tokens"
     )
 
-    print("\n📝 Splitting documents into chunks...")
+# ================================
+# SUMMARY
+# ================================
 
-    # Split documents
-    chunks = text_splitter.split_documents(documents)
-
-    # Clean chunks (remove tabs)
-    cleaned_chunks = replace_t_with_space(chunks)
-
-    # Display chunking results
-    print(f"✅ Created {len(cleaned_chunks)} chunks")
-
-    # Calculate statistics
-    chunk_sizes = [len(chunk.page_content) for chunk in cleaned_chunks]
-    avg_size = sum(chunk_sizes) / len(chunk_sizes)
-    min_size = min(chunk_sizes)
-    max_size = max(chunk_sizes)
-
-    print("📊 Chunk statistics:")
-    print(f"   Average size: {avg_size:.0f} characters")
-    print(f"   Minimum size: {min_size} characters")
-    print(f"   Maximum size: {max_size} characters")
-
-    return cleaned_chunks
-
-
-def show_chunk_samples(chunks, num_samples=10):
-    """Show sample chunks for analysis"""
-    print("\n🔍 CHUNK SAMPLES")
-    print("=" * 40)
-    print(f"Showing first {num_samples} chunks for analysis:")
-
-    for i in range(min(num_samples, len(chunks))):
-        chunk = chunks[i]
-        print(f"\n{'=' * 15} CHUNK {i + 1} {'=' * 15}")
-        print(f"📄 Page: {chunk.metadata.get('page', 'Unknown')}")
-        print(f"📏 Size: {len(chunk.page_content)} characters")
-        print("📝 Content:")
-        print("-" * 50)
-        print(chunk.page_content)
-        print("-" * 50)
-
-        # Quick analysis
-        words = len(chunk.page_content.split())
-        sentences = (
-            chunk.page_content.count(".")
-            + chunk.page_content.count("!")
-            + chunk.page_content.count("?")
-        )
-
-        # Check boundaries
-        starts_clean = chunk.page_content[0].isupper() if chunk.page_content else False
-        ends_clean = (
-            chunk.page_content.strip().endswith((".", "!", "?", '"'))
-            if chunk.page_content
-            else False
-        )
-
-        print(f"📊 {words} words, ~{sentences} sentences")
-        if starts_clean and ends_clean:
-            print("✅ Clean boundaries")
-        else:
-            print("⚠️  May have cut boundaries")
-
-
-def main():
-    """Demonstrate text chunking"""
-    print("🎓 RAG TUTORIAL - STEP 2: TEXT CHUNKING")
-    print("=" * 60)
-
-    # Load document first
-    pdf_path = "04-RAG/data/Understanding_Climate_Change.pdf"
-
-    if not os.path.exists(pdf_path):
-        print(f"❌ File not found: {pdf_path}")
-        return
-
-    print("📄 Loading document...")
-    loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
-    print(f"✅ Loaded {len(documents)} pages")
-
-    # Chunk the text
-    chunks = step2_chunk_text(documents, chunk_size=500, chunk_overlap=100)
-
-    # Show chunk samples
-    show_chunk_samples(chunks, num_samples=10)
-
-    print("\n📚 KEY LEARNINGS:")
-    print("- Documents are split into manageable chunks")
-    print("- Overlap prevents information loss at boundaries")
-    print("- Clean boundaries improve chunk quality")
-    print("- Each chunk maintains source metadata")
-
-    print("\n🎯 Next step: Creating Embeddings (step3_create_embeddings.py)")
-
-
-if __name__ == "__main__":
-    main()
+print("\n=== SUMMARY ===")
+print("CharacterTextSplitter does NOT split at exact character count!")
+print("It splits by separator first, then groups to reach target size")
+print("Default separator is '\\n\\n' (paragraphs)")
+print("If you want exact 1000-character chunks, use separator=''")
+print("But this might break sentences/words!")
+print(f"Token ratio: ~{sum(chunk_sizes) / sum(token_counts):.1f} characters per token")

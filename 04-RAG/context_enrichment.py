@@ -1,255 +1,169 @@
-#!/usr/bin/env python3
-"""
-RAG Step 5: Context Enrichment
-Learn how to combine and prepare retrieved information for answer generation
-"""
+# ================================
+# SIMPLE FAISS CONTEXT ENRICHMENT
+# ================================
 
-import os
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
 from langchain_ollama import OllamaEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader
 
-# Configuration
-OLLAMA_URL = "http://localhost:11434"
-EMBEDDING_MODEL = "mxbai-embed-large:latest"
+# ================================
+# EXAMPLE 1: Create FAISS Vector Store
+# ================================
 
+print("=== CREATING FAISS VECTOR STORE ===")
 
-def replace_t_with_space(list_of_documents):
-    """Clean text by replacing tab characters with spaces"""
-    for doc in list_of_documents:
-        doc.page_content = doc.page_content.replace("\t", " ")
-    return list_of_documents
+# Initialize embeddings model - Choose one:
 
+# Option 1: OpenAI embeddings
+embeddings_model = OpenAIEmbeddings(model="text-embedding-3-small")
 
-def prepare_vector_store():
-    """Prepare vector store for context enrichment demonstration"""
-    pdf_path = "data/Understanding_Climate_Change.pdf"
+# Option 2: Ollama embeddings (comment/uncomment to switch)
+# embeddings_model = OllamaEmbeddings(model="mxbai-embed-large:latest")
 
-    if not os.path.exists(pdf_path):
-        print(f"❌ File not found: {pdf_path}")
-        return None
+# Load and chunk documents
+loader = PyPDFLoader("04-RAG/data/Understanding_Climate_Change.pdf")
+docs = loader.load()
 
-    # Load and chunk document
-    loader = PyPDFLoader(pdf_path)
-    documents = loader.load()
+splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+chunks = splitter.split_documents(docs)
 
-    text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000, chunk_overlap=200, length_function=len
-    )
+print(f"Model being used: {type(embeddings_model).__name__}")
+print(f"Number of chunks: {len(chunks)}")
 
-    chunks = text_splitter.split_documents(documents)
-    cleaned_chunks = replace_t_with_space(chunks)
+# Create FAISS vector store
+faiss_db = FAISS.from_documents(chunks, embeddings_model)
 
-    # Create embeddings and vector store
-    embeddings = OllamaEmbeddings(base_url=OLLAMA_URL, model=EMBEDDING_MODEL)
-    vector_store = FAISS.from_documents(cleaned_chunks, embeddings)
+print("✅ FAISS vector store created!")
 
-    return vector_store
+# ================================
+# EXAMPLE 2: Basic Search
+# ================================
 
+query = "What causes climate change?"
 
-def step5_enrich_context(relevant_docs, query):
-    """
-    Step 5: Context Enrichment
+print("\n=== BASIC SEARCH ===")
+print(f"Query: '{query}'")
 
-    This step demonstrates:
-    - Combining multiple retrieved chunks
-    - Creating coherent context
-    - Analyzing context quality
-    - Preparing for answer generation
-    """
-    print("🎯 STEP 5: Context Enrichment")
-    print("=" * 40)
+# Get top 3 most similar chunks
+basic_results = faiss_db.similarity_search(query, k=3)
 
-    print(f"🔍 Query: '{query}'")
-    print(f"📚 Input: {len(relevant_docs)} retrieved chunks")
+print(f"Found {len(basic_results)} chunks")
+for i, chunk in enumerate(basic_results, 1):
+    print(f"\nChunk {i}:")
+    print(f"Content: {chunk.page_content[:150]}...")
 
-    # Show individual chunks before combining
-    print("\n📋 Individual chunks:")
-    for i, doc in enumerate(relevant_docs, 1):
-        page = doc.metadata.get("page", "Unknown")
-        size = len(doc.page_content)
-        preview = doc.page_content[:100].replace("\n", " ")
-        print(f"   {i}. Page {page} ({size} chars): {preview}...")
+# ================================
+# EXAMPLE 3: Search with Scores
+# ================================
 
-    # Combine chunks into enriched context
-    context = "\n\n".join([doc.page_content for doc in relevant_docs])
+print("\n=== SEARCH WITH SIMILARITY SCORES ===")
 
-    print("\n🎯 Enriched context created:")
-    print(f"   Total length: {len(context)} characters")
-    print(f"   Word count: {len(context.split())} words")
-    print(f"   Combined from {len(relevant_docs)} sources")
+# Get results with similarity scores
+results_with_scores = faiss_db.similarity_search_with_score(query, k=3)
 
-    return context
+print(f"Query: '{query}'")
+for i, (chunk, score) in enumerate(results_with_scores, 1):
+    print(f"\nResult {i} (Score: {score:.4f}):")
+    print(f"Content: {chunk.page_content[:150]}...")
+    print(f"Similarity: {1 - score:.4f}")  # Convert distance to similarity
 
+# ================================
+# EXAMPLE 4: Context Enrichment
+# ================================
 
-def analyze_context_quality(context, query):
-    """Analyze the quality of enriched context"""
-    print("\n🔍 CONTEXT QUALITY ANALYSIS")
-    print("=" * 40)
+print("\n=== CONTEXT ENRICHMENT ===")
 
-    # Basic statistics
-    sentences = context.count(".") + context.count("!") + context.count("?")
-    paragraphs = context.count("\n\n") + 1
-    words = len(context.split())
+# Get more chunks for richer context
+enriched_results = faiss_db.similarity_search(query, k=5)
 
-    print("📊 Context statistics:")
-    print(f"   Words: {words}")
-    print(f"   Sentences: ~{sentences}")
-    print(f"   Paragraphs: {paragraphs}")
+print("Basic retrieval: 3 chunks")
+print(f"Enriched retrieval: {len(enriched_results)} chunks")
 
-    # Check for query terms
-    query_words = set(query.lower().split())
-    context_words = set(context.lower().split())
-    matching_words = query_words.intersection(context_words)
+print("\nEnriched context:")
+for i, chunk in enumerate(enriched_results, 1):
+    print(f"Chunk {i}: {chunk.page_content[:100]}...")
 
-    print("\n🔗 Query relevance:")
-    print(f"   Query words in context: {len(matching_words)}/{len(query_words)}")
-    if matching_words:
-        print(f"   Matching terms: {', '.join(list(matching_words)[:5])}")
+# ================================
+# EXAMPLE 5: Different Search Parameters
+# ================================
 
-    # Check context coherence
-    chunks_in_context = context.split("\n\n")
-    unique_pages = set()
+print("\n=== DIFFERENT SEARCH PARAMETERS ===")
 
-    for chunk in chunks_in_context:
-        # Simple heuristic: look for page-like content patterns
-        if len(chunk) > 100:
-            unique_pages.add(len(chunk))  # Simplified page detection
+# Conservative search (fewer, more relevant results)
+conservative = faiss_db.similarity_search(query, k=2)
 
-    print("\n📄 Context coverage:")
-    print(f"   Information chunks: {len(chunks_in_context)}")
-    print(f"   Estimated sources: {len(unique_pages)}")
+# Aggressive search (more results, potentially less relevant)
+aggressive = faiss_db.similarity_search(query, k=8)
 
-    # Quality indicators
-    quality_score = 0
-    indicators = []
+print(f"Conservative search (k=2): {len(conservative)} results")
+print(f"Aggressive search (k=8): {len(aggressive)} results")
 
-    if words >= 200:
-        quality_score += 1
-        indicators.append("✅ Sufficient length")
-    else:
-        indicators.append("⚠️  May be too short")
+# ================================
+# EXAMPLE 6: Multiple Query Approach
+# ================================
 
-    if len(matching_words) >= len(query_words) * 0.5:
-        quality_score += 1
-        indicators.append("✅ Good query relevance")
-    else:
-        indicators.append("⚠️  Low query relevance")
+print("\n=== MULTIPLE QUERY APPROACH ===")
 
-    if len(chunks_in_context) >= 2:
-        quality_score += 1
-        indicators.append("✅ Multiple perspectives")
-    else:
-        indicators.append("⚠️  Single source")
+# Generate related queries for better context
+related_queries = [
+    "What causes climate change?",
+    "How do greenhouse gases contribute to global warming?",
+    "What are the main drivers of climate change?",
+]
 
-    print("\n🎯 Quality assessment:")
-    for indicator in indicators:
-        print(f"   {indicator}")
+all_chunks = []
+for related_query in related_queries:
+    results = faiss_db.similarity_search(related_query, k=2)
+    all_chunks.extend(results)
 
-    overall_quality = ["Poor", "Fair", "Good", "Excellent"][quality_score]
-    print(f"   Overall: {overall_quality} ({quality_score}/3)")
+# Remove duplicates (simple approach)
+unique_chunks = []
+seen_content = set()
+for chunk in all_chunks:
+    content_preview = chunk.page_content[:100]
+    if content_preview not in seen_content:
+        unique_chunks.append(chunk)
+        seen_content.add(content_preview)
 
+print("Single query results: 3 chunks")
+print(f"Multiple query results: {len(unique_chunks)} unique chunks")
 
-def demonstrate_context_enrichment():
-    """Demonstrate context enrichment with different queries"""
-    print("\n🎭 CONTEXT ENRICHMENT EXAMPLES")
-    print("=" * 40)
+# ================================
+# EXAMPLE 7: Save and Load FAISS Index
+# ================================
 
-    # Prepare vector store
-    vector_store = prepare_vector_store()
-    if not vector_store:
-        return
+print("\n=== SAVE AND LOAD FAISS INDEX ===")
 
-    # Test different types of queries
-    test_queries = [
-        {"query": "What causes climate change?", "description": "Factual question"},
-        {"query": "greenhouse gas emissions", "description": "Keyword search"},
-        {
-            "query": "How can we reduce environmental impact?",
-            "description": "Solution-oriented",
-        },
-    ]
+# Save FAISS index to disk
+faiss_db.save_local("04-RAG/db/faiss_index")
+print("✅ FAISS index saved to disk")
 
-    for test in test_queries:
-        query = test["query"]
-        description = test["description"]
+# Load FAISS index from disk
+loaded_faiss_db = FAISS.load_local(
+    "04-RAG/db/faiss_index", embeddings_model, allow_dangerous_deserialization=True
+)
+print("✅ FAISS index loaded from disk")
 
-        print(f"\n{'=' * 20} {description.upper()} {'=' * 20}")
+# Test loaded index
+test_results = loaded_faiss_db.similarity_search("climate change effects", k=2)
+print(f"Loaded index test: {len(test_results)} results found")
 
-        # Retrieve relevant documents
-        relevant_docs = vector_store.similarity_search(query, k=3)
+# ================================
+# EXAMPLE 8: FAISS vs ChromaDB Comparison
+# ================================
 
-        # Enrich context
-        context = step5_enrich_context(relevant_docs, query)
+print("\n=== FAISS ADVANTAGES ===")
+print("✅ Faster similarity search")
+print("✅ Better for large datasets")
+print("✅ More search algorithms available")
+print("✅ Can handle millions of vectors efficiently")
+print("✅ Easy to save/load indexes")
+print("✅ Good for context enrichment with many results")
 
-        # Analyze quality
-        analyze_context_quality(context, query)
-
-        # Show context preview
-        print("\n📖 Context preview:")
-        print("-" * 50)
-        print(context[:300] + "..." if len(context) > 300 else context)
-        print("-" * 50)
-
-
-def compare_context_sizes():
-    """Compare different amounts of retrieved context"""
-    print("\n⚖️  CONTEXT SIZE COMPARISON")
-    print("=" * 40)
-
-    vector_store = prepare_vector_store()
-    if not vector_store:
-        return
-
-    query = "climate change effects"
-    k_values = [1, 3, 5]
-
-    for k in k_values:
-        print(f"\n📊 Using top {k} retrieved chunks:")
-
-        relevant_docs = vector_store.similarity_search(query, k=k)
-        context = "\n\n".join([doc.page_content for doc in relevant_docs])
-
-        words = len(context.split())
-        chars = len(context)
-
-        print(f"   Context size: {chars} chars, {words} words")
-        print(f"   Sources: {len(relevant_docs)} chunks")
-
-        # Quick relevance check
-        query_words = set(query.lower().split())
-        context_words = set(context.lower().split())
-        relevance = len(query_words.intersection(context_words)) / len(query_words)
-
-        print(f"   Relevance: {relevance:.1%}")
-
-
-def main():
-    """Demonstrate context enrichment"""
-    print("🎓 RAG TUTORIAL - STEP 5: CONTEXT ENRICHMENT")
-    print("=" * 60)
-
-    try:
-        # Demonstrate context enrichment
-        demonstrate_context_enrichment()
-
-        # Compare different context sizes
-        compare_context_sizes()
-
-        print("\n📚 KEY LEARNINGS:")
-        print("- Context enrichment combines multiple retrieved chunks")
-        print("- Quality depends on relevance and completeness")
-        print("- More chunks provide broader context but may add noise")
-        print("- Good context contains query-relevant information")
-        print("- Context quality affects final answer quality")
-
-        print("\n🎯 Next step: Answer Generation (step6_answer_generation.py)")
-
-    except Exception as e:
-        print(f"❌ Error in context enrichment: {e}")
-        print("💡 Make sure Ollama is running and the model is available")
-
-
-if __name__ == "__main__":
-    main()
+print("\nUse FAISS when:")
+print("- You need fast retrieval")
+print("- Working with large document collections")
+print("- Want to experiment with different search parameters")
+print("- Need to enrich context with many similar chunks")
