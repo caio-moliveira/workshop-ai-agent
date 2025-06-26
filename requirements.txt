@@ -32,3 +32,5 @@ langchain-mcp-adapters
 langgraph 
 langsmith
 tiktoken
+pygraphviz
+langchain-tavily

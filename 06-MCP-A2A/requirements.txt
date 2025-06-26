@@ -5,6 +5,7 @@ langchain
 langgraph
 langchain-mcp-adapters
 langchain-openai
+langchain-tavily
 
 # MCP Protocol
 fastmcp
@@ -21,3 +22,4 @@ python-dotenv
 
 # Utilities
 asyncio
+pygraphviz
