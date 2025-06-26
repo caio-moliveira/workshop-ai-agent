@@ -13,13 +13,11 @@ from utils.state import (
     CategoryType,
     AgentType,
     criar_estado_inicial,
-    deve_escalar,
 )
 from agents.agente_coordenador import AgenteCoordenador
 from agents.agente_tecnico import AgenteTecnico
 from agents.agente_financeiro import AgenteFinanceiro
 from agents.agente_geral import AgenteGeral
-from agents.agente_escalado import AgenteEscalacao
 from langsmith import traceable
 
 
@@ -32,7 +30,6 @@ class WorkflowSuporteMultiAgente:
         self.agente_tecnico = AgenteTecnico()
         self.agente_financeiro = AgenteFinanceiro()
         self.agente_geral = AgenteGeral()
-        self.agente_escalacao = AgenteEscalacao()
 
         # Criar workflow
         self.app = self._criar_workflow()
@@ -48,7 +45,6 @@ class WorkflowSuporteMultiAgente:
         workflow.add_node("agent_tecnico", self._processar_tecnico)
         workflow.add_node("agent_financeiro", self._processar_financeiro)
         workflow.add_node("agent_geral", self._processar_geral)
-        workflow.add_node("escalacao", self._processar_escalacao)
 
         # === EDGES ===
         workflow.add_edge("inicializar", "categorizar")
@@ -62,7 +58,6 @@ class WorkflowSuporteMultiAgente:
                 "agent_tecnico": "agent_tecnico",
                 "agent_financeiro": "agent_financeiro",
                 "agent_geral": "agent_geral",
-                "escalacao": "escalacao",
             },
         )
 
@@ -70,7 +65,6 @@ class WorkflowSuporteMultiAgente:
         workflow.add_edge("agent_tecnico", END)
         workflow.add_edge("agent_financeiro", END)
         workflow.add_edge("agent_geral", END)
-        workflow.add_edge("escalacao", END)
 
         # Ponto de entrada
         workflow.set_entry_point("inicializar")
@@ -124,27 +118,10 @@ class WorkflowSuporteMultiAgente:
         print("✅ Informações gerais fornecidas")
         return {**state, **resultado, "agent_used": AgentType.GERAL}
 
-    @traceable(name="Agente_Escalacao", tags=["escalacao", "urgente"])
-    def _processar_escalacao(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Processa escalação"""
-        print("🚨 Escalando para agente humano...")
-        resultado = self.agente_escalacao.processar_escalacao(state)
-        print("✅ Escalação processada")
-        return {
-            **state,
-            **resultado,
-            "agent_used": AgentType.ESCALACAO,
-            "escalated": True,
-        }
-
     # === ROTEAMENTO ===
 
     def _rotear_agente(self, state: StateSuporteSimples) -> str:
         """Determina qual agente deve processar a consulta"""
-        # Se sentimento negativo, escalar
-        if deve_escalar(state):
-            print(" Sentimento negativo detectado - roteando para escalação")
-            return "escalacao"
 
         # Rotear por categoria
         category = state.get("category", CategoryType.GENERAL)
@@ -197,22 +174,18 @@ def criar_workflow() -> WorkflowSuporteMultiAgente:
     print("🔧 Criando workflow multi-agente...")
     workflow = WorkflowSuporteMultiAgente()
     print("✅ Workflow criado com sucesso!")
+
+    # Gerar visualização do grafo
+    try:
+        print("📊 Gerando visualização do workflow...")
+        graph_image = workflow.app.get_graph().draw_mermaid_png()
+
+        # Salvar na pasta graph
+        with open("src/graph/workflow_diagram.png", "wb") as f:
+            f.write(graph_image)
+        print("✅ Diagrama salvo em: src/graph/workflow_diagram.png")
+
+    except Exception as e:
+        print(f"⚠️ Erro ao gerar diagrama: {e}")
+
     return workflow
-
-
-# === TESTE STANDALONE ===
-
-if __name__ == "__main__":
-    # Teste rápido do workflow
-    print("🧪 TESTE DO WORKFLOW")
-
-    workflow = criar_workflow()
-
-    # Teste simples
-    resultado = workflow.processar_consulta("Não consigo fazer login")
-
-    print("\nResultado do teste:")
-    print(f"Categoria: {resultado['category']}")
-    print(f"Sentimento: {resultado['sentiment']}")
-    print(f"Agente: {resultado['agent_used']}")
-    print(f"Resposta: {resultado['response'][:100]}...")

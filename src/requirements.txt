@@ -1,0 +1,29 @@
+# Requirements para Sistema Multi-Agente
+# Projeto de demonstração educacional
+
+# === CORE DEPENDENCIES ===
+# LangGraph para workflows multi-agente
+langgraph>=0.0.40
+
+# LangChain Core e OpenAI
+langchain-core>=0.1.52
+langchain-openai>=0.1.0
+
+# LangSmith para observabilidade (opcional)
+langsmith>=0.1.0
+
+# === UTILITIES ===
+# Para variáveis de ambiente
+python-dotenv>=1.0.0
+
+# OpenAI SDK
+openai>=1.0.0
+
+# === TYPING SUPPORT ===
+# Para melhor suporte a tipos (Python < 3.9)
+typing-extensions>=4.0.0
+
+# === DEVELOPMENT (OPCIONAL) ===
+# Para desenvolvimento em notebooks
+# ipython>=8.0.0
+# jupyter>=1.0.0

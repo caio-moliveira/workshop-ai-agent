@@ -1,338 +1,558 @@
-# 06-MCP-A2A
+# 🔗 06-MCP-A2A - Model Context Protocol Agent-to-Agent
 
-Esta pasta demonstra **Model Context Protocol (MCP) Agent-to-Agent** communication, mostrando como agentes de IA podem se comunicar e colaborar através de protocolos padronizados, especificamente integrando com o Context7 MCP server para análise de documentação.
+Esta pasta demonstra **Model Context Protocol (MCP) Agent-to-Agent** communication, mostrando como agentes de IA podem se comunicar e colaborar através de protocolos padronizados. Inclui implementações com **CrewAI**, **LangChain**, e **LangGraph** integradas ao **Context7 MCP server** para análise inteligente de documentação.
 
-## 📁 Arquivos
+## 🎯 Objetivo
 
-### `app.py`
-**Interface Streamlit** para interação com agente MCP.
+Demonstrar na prática:
+- **Comunicação inter-agentes** via protocolos padronizados
+- **Integração MCP** com diferentes frameworks de IA
+- **Colaboração estruturada** entre agentes especializados
+- **Orquestração** de workflows multi-agente
+- **Observabilidade** e debugging de sistemas distribuídos
 
-**Características:**
-- Interface web simples e intuitiva
-- Comunicação assíncrona com agente via FastMCP
-- Chat persistente com histórico de mensagens
-- Tratamento de erros robusto
+## 📁 Arquitetura dos Projetos
 
-**Funcionalidades:**
-- Chat em tempo real com agente Context7
-- Histórico de conversas na sessão
-- Interface responsiva e amigável
+### 🚀 Projetos Implementados
 
-### `crewai_mcp_agent.py`
-**Agente CrewAI integrado com MCP Context7**
+| Arquivo | Framework | Complexidade | Interface | Foco |
+|---------|-----------|--------------|-----------|------|
+| **`crewai_mcp_agent.py`** + **`app.py`** | CrewAI | ⭐⭐ | Web (Streamlit) | Produção |
+| **`lang_mcp_agent.py`** | LangChain | ⭐⭐⭐ | CLI Interativo | Desenvolvimento |
+| **`a2a_langgraph.py`** | LangGraph | ⭐⭐⭐⭐ | CLI + Visualização | Pesquisa |
 
-**Características:**
-- **Agente Especializado**: "Elite Documentation Intelligence Analyst"
-- **Integração MCP**: Conecta com Context7 server via stdio
-- **CrewAI Framework**: Workflow estruturado com tarefas
-- **FastMCP Server**: Expõe agente como serviço MCP
+## 🏗️ Implementações Detalhadas
 
-**Funcionalidades:**
-- Análise inteligente de documentação técnica
-- Interpretação de consultas em linguagem natural
-- Extração de informações de APIs e codebases
-- Geração de exemplos de código e configurações
+### 1. 🎨 CrewAI MCP Agent (Produção Ready)
 
-### `langchain_mcp_agent.py`
-**Agente LangChain com MCP e LangGraph**
-
-**Características:**
-- **LangGraph Workflow**: Grafo de estados para processamento
-- **Múltiplos servidores MCP**: Arquitetura extensível
-- **Visualização avançada**: Monitoramento step-by-step
-- **Interface interativa**: Comandos especiais para debug
-
-**Funcionalidades avançadas:**
-- Visualização Mermaid do workflow
-- Streaming de execução em tempo real
-- Análise detalhada de estados
-- Comandos de debug (`graph`, `stream`)
-
-## 🔗 Model Context Protocol (MCP)
-
-### O que é MCP?
-
-**MCP** é um protocolo padronizado para comunicação entre modelos de IA e ferramentas externas, permitindo que agentes acessem e manipulem contextos de forma estruturada.
-
-**Características principais:**
-- **Protocolo aberto**: Especificação padronizada
-- **Bidirectional**: Comunicação em ambas direções
-- **Extensível**: Suporte a ferramentas customizadas
-- **Interoperável**: Funciona entre diferentes frameworks
-
-### Context7 Integration
-
-**Context7** é um servidor MCP especializado em análise de documentação:
-- **NPM Package**: `@upstash/context7-mcp`
-- **Funcionalidades**: Busca e análise de documentação
-- **Transporte**: stdio (standard input/output)
-- **Uso**: Consultas de documentação técnica
-
-## 🚀 Como usar
-
-### 1. Pré-requisitos
-
-```bash
-# 1. Instalar dependências Python
-pip install -r requirements.txt
-
-# 2. Instalar Node.js (para Context7)
-# Download: https://nodejs.org
-
-# 3. Configurar OpenAI API
-export OPENAI_API_KEY="sua-chave-aqui"
-
-# 4. Verificar NPX está disponível
-npx --version
-```
-
-### 2. CrewAI MCP Agent
-
-```bash
-# Iniciar servidor MCP com agente CrewAI
-python crewai_mcp_agent.py
-
-# Servidor fica disponível em:
-# http://127.0.0.1:8004/sse
-```
-
-**Em outro terminal:**
-```bash
-# Iniciar interface Streamlit
-streamlit run app.py
-```
-
-### 3. LangChain MCP Agent
-
-```bash
-# Executar agente LangChain interativo
-python langchain_mcp_agent.py
-```
-
-**Comandos especiais:**
-- `graph`: Visualizar estrutura do workflow
-- `stream <pergunta>`: Executar com monitoramento detalhado
-- `quit`: Sair do agente
-
-## 🔧 Arquitetura MCP
-
-### CrewAI Architecture
-
+**Arquitetura:**
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Streamlit     │    │   FastMCP       │    │   Context7      │
 │   Interface     │───▶│   Server        │───▶│   MCP Server    │
-│                 │    │                 │    │                 │
-│ ┌─────────────┐ │    │ ┌─────────────┐ │    │ ┌─────────────┐ │
-│ │ User Input  │ │    │ │ CrewAI      │ │    │ │ NPX Process │ │
-│ │ Chat UI     │ │    │ │ Agent       │ │    │ │ stdio       │ │
-│ └─────────────┘ │    │ └─────────────┘ │    │ └─────────────┘ │
+│   (app.py)      │    │ (crewai_agent)  │    │   (NPX/Node)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### LangChain Architecture
+**Características:**
+- **Agente Especializado**: "Elite Documentation Intelligence Analyst"
+- **Web Interface**: Interface Streamlit responsiva e intuitiva
+- **FastMCP Server**: Expõe agente CrewAI como serviço MCP
+- **Chat Persistente**: Histórico de conversas na sessão
+- **Tratamento de Erros**: Fallback e recovery robusto
 
+**Como usar:**
+```bash
+# Terminal 1: Iniciar servidor MCP
+python crewai_mcp_agent.py
+# Servidor disponível em: http://127.0.0.1:8004/sse
+
+# Terminal 2: Interface web
+streamlit run app.py
+# Interface disponível em: http://localhost:8501
+```
+
+### 2. ⚡ LangChain MCP Agent (Desenvolvimento)
+
+**Arquitetura:**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 LangChain MCP Client                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐     ┌─────────────────────────────────┐   │
+│  │ ChatOpenAI   │────▶│   create_react_agent           │   │
+│  │ (gpt-4o-mini)│     │   (ReAct Pattern)              │   │
+│  └──────────────┘     └─────────────────────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│                 MCP Tools Integration                       │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │  Context7: npx @upstash/context7-mcp@latest            │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Características:**
+- **ReAct Pattern**: Reasoning + Acting em loop
+- **Tool Integration**: Integração automática de ferramentas MCP
+- **Session Management**: Gestão de sessão com Context7
+- **CLI Interativo**: Interface de linha de comando rica
+
+**Como usar:**
+```bash
+# Executar agente interativo
+python lang_mcp_agent.py
+
+# Comandos disponíveis:
+# - Perguntas diretas sobre documentação
+# - "quit" para sair
+```
+
+### 3. 🧩 LangGraph Multi-Agent (Avançado)
+
+**Arquitetura:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    LangGraph Workflow                       │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌──────────┐     ┌──────────┐     ┌──────────────────────┐ │
-│  │  START   │────▶│call_model│────▶│   tools_condition    │ │
+│  │  START   │────▶│Researcher│────▶│   Writer Agent      │ │
+│  │          │     │Agent     │     │                      │ │
+│  │          │     │(Tavily+  │     │ (GPT Analysis +      │ │
+│  │          │     │ GPT)     │     │  Article Creation)   │ │
 │  └──────────┘     └──────────┘     └──────────────────────┘ │
 │                                     │                      │ │
-│  ┌──────────┐     ┌──────────┐     │                      │ │
-│  │   END    │◀────│  tools   │◀────┘                      │ │
-│  └──────────┘     └──────────┘                            │ │
-├─────────────────────────────────────────────────────────────┤
-│                 MultiServerMCPClient                       │
-│  ┌─────────────────────────────────────────────────────────┐ │
-│  │  Context7: npx @upstash/context7-mcp                   │ │
-│  └─────────────────────────────────────────────────────────┘ │
+│  ┌──────────┐                      │                      │ │
+│  │   END    │◀─────────────────────┘                      │ │
+│  └──────────┘                                             │ │
 └─────────────────────────────────────────────────────────────┘
+```
+
+**Características:**
+- **Estado Compartilhado**: TypedDict com informações entre agentes
+- **Researcher Agent**: Busca web (Tavily) + análise LLM
+- **Writer Agent**: Criação de artigos baseada em pesquisa
+- **Workflow Visual**: Grafo de estados observável
+- **Fallback Strategy**: LLM-only se APIs externas falharem
+
+**Como usar:**
+```bash
+# Configurar APIs (opcionais)
+export OPENAI_API_KEY="sua-chave"
+export TAVILY_API_KEY="sua-chave"  # Web search
+
+# Executar workflow
+python a2a_langgraph.py
+```
+
+## 🔧 Model Context Protocol (MCP)
+
+### 🌐 O que é MCP?
+
+**MCP** é um protocolo aberto que permite comunicação estruturada entre modelos de IA e ferramentas externas, criando um ecossistema interoperável de agentes.
+
+**Principais Características:**
+- **🔄 Protocolo Bidirecional**: Comunicação em ambas direções
+- **📡 Transport Agnostic**: stdio, HTTP, WebSocket
+- **🔧 Tool Integration**: Ferramentas como funções nativas
+- **📋 Standardized**: Especificação aberta e padronizada
+- **🔗 Interoperable**: Funciona entre diferentes frameworks
+
+### 🛠️ Context7 Integration
+
+**Context7** é um servidor MCP especializado em análise de documentação:
+
+| Aspecto | Detalhes |
+|---------|----------|
+| **Package** | `@upstash/context7-mcp@latest` |
+| **Transport** | stdio (Standard Input/Output) |
+| **Funcionalidades** | Busca e análise de documentação técnica |
+| **Compatibilidade** | Multiplataforma via NPX |
+| **Performance** | Otimizado para consultas técnicas |
+
+**Exemplo de uso:**
+```bash
+# Testar Context7 diretamente
+npx -y @upstash/context7-mcp@latest
+
+# Integração programática
+server_params = StdioServerParameters(
+    command="npx",
+    args=["-y", "@upstash/context7-mcp@latest"]
+)
+```
+
+## 🚀 Configuração e Instalação
+
+### 1. 📋 Pré-requisitos
+
+```bash
+# 1. Node.js (para Context7)
+# Download: https://nodejs.org
+node --version  # Verificar instalação
+npx --version   # Verificar NPX
+
+# 2. Python 3.8+
+python --version
+
+# 3. APIs (opcionais)
+export OPENAI_API_KEY="sua-chave-openai"
+export TAVILY_API_KEY="sua-chave-tavily"  # Para busca web
+```
+
+### 2. 📦 Dependências Python
+
+```bash
+# Instalar dependências
+pip install -r requirements.txt
+
+# Principais bibliotecas instaladas:
+# - crewai, crewai-tools[mcp]
+# - langchain, langgraph, langchain-mcp-adapters
+# - fastmcp, mcp
+# - streamlit
+# - openai
+```
+
+### 3. 🔧 Verificação da Configuração
+
+```bash
+# Testar Context7
+npx -y @upstash/context7-mcp@latest
+
+# Verificar APIs
+python -c "import openai; print('OpenAI OK')"
+python -c "import streamlit; print('Streamlit OK')"
 ```
 
 ## 📊 Comparação das Abordagens
 
-| Aspecto | CrewAI MCP | LangChain MCP |
-|---------|------------|---------------|
-| **Complexidade** | Baixa | Alta |
-| **Interface** | Web (Streamlit) | CLI Interativo |
-| **Workflow** | Sequencial simples | Grafo de estados |
-| **Monitoramento** | Básico | Avançado |
-| **Extensibilidade** | Média | Alta |
-| **Visualização** | Nenhuma | Mermaid + Streaming |
-| **Debug** | Logs básicos | Step-by-step |
-| **Deploy** | Fácil (web app) | Desenvolvimento |
+| Aspecto | CrewAI | LangChain | LangGraph |
+|---------|--------|-----------|-----------|
+| **🏗️ Complexidade** | Baixa | Média | Alta |
+| **🖥️ Interface** | Web (Streamlit) | CLI | CLI + Visuals |
+| **🔄 Workflow** | Sequencial | ReAct Loop | Estado/Grafo |
+| **📊 Observabilidade** | Logs básicos | Session tracking | Visual + Streaming |
+| **🔧 Extensibilidade** | Média | Alta | Muito Alta |
+| **🚀 Deploy** | Produção ready | Desenvolvimento | Pesquisa/Prototipo |
+| **📈 Learning Curve** | Fácil | Média | Avançada |
+| **🎯 Melhor para** | MVPs rápidos | Integrações | Workflows complexos |
 
-## 🎯 Funcionalidades Demonstradas
+## 💡 Casos de Uso Práticos
 
-### Context7 Capabilities
+### 🎯 Ideais para MCP A2A
 
-**Tipos de consultas suportadas:**
-- Busca em documentação de APIs
-- Análise de codebases
-- Explicação de conceitos técnicos
-- Geração de exemplos de uso
-- Configuração de ferramentas
+1. **📚 Análise de Documentação**
+   ```
+   Cenário: Desenvolvedor quer entender API complexa
+   Solução: Context7 + Agent análise → Explicação + Exemplos
+   ```
 
-**Exemplos de perguntas:**
+2. **🔍 Consultoria Técnica**
+   ```
+   Cenário: Troubleshooting de configuração
+   Solução: Agent busca docs → Agent analisa → Agent responde
+   ```
+
+3. **⚡ Desenvolvimento Assistido**
+   ```
+   Cenário: Gerar código específico para biblioteca
+   Solução: Context7 docs → Code generation → Validation
+   ```
+
+4. **🧠 Knowledge Management**
+   ```
+   Cenário: Onboarding de novos desenvolvedores
+   Solução: Agent guia → Context search → Learning path
+   ```
+
+### 📝 Exemplos de Perguntas
+
+**Para Context7:**
 ```
-"Find documentation for React hooks"
-"How to configure FastAPI with async?"
-"What is the Context7 MCP protocol?"
-"Show me examples of LangChain agents"
+"How to configure FastAPI with async database?"
+"Find React hooks documentation and examples"
+"What are LangChain memory components?"
+"Show me Context7 MCP protocol usage"
+"Explain CrewAI multi-agent workflows"
 ```
 
-### LangGraph Features
+**Para LangGraph Multi-Agent:**
+```
+"Research and write about quantum computing applications"
+"Analyze trends in sustainable energy and create report"
+"Investigate blockchain scalability solutions"
+```
 
-**Visualização e Monitoramento:**
-- **Mermaid Diagrams**: Representação visual do workflow
-- **Step-by-step Execution**: Acompanhamento em tempo real
-- **State Inspection**: Análise detalhada de estados
-- **Tool Call Tracking**: Monitoramento de chamadas de ferramentas
+## 🔍 Debugging e Observabilidade
 
-## 🔍 Debugging e Desenvolvimento
+### 🐛 Debugging CrewAI
 
-### Logs e Monitoramento
-
-**CrewAI Debugging:**
 ```python
-# Habilitar logs verbosos
-agent = Agent(verbose=True, ...)
-crew = Crew(verbose=True, ...)
+# Habilitar logs detalhados
+agent = Agent(
+    verbose=True,     # Logs de agente
+    # ... outras configurações
+)
+
+crew = Crew(
+    verbose=True,     # Logs de execução
+    # ... outras configurações
+)
+
+# Logs MCP
+os.environ["MCP_DEBUG"] = "1"
 ```
 
-**LangChain Debugging:**
+### 🔬 Debugging LangChain
+
 ```python
-# Streaming de eventos
+# Callback para observabilidade
+from langchain.callbacks import StdOutCallbackHandler
+
+callbacks = [StdOutCallbackHandler()]
+agent = create_react_agent(model, tools, callbacks=callbacks)
+
+# Debug de sessão MCP
+async with ClientSession(read, write) as session:
+    await session.initialize()
+    print(f"Available tools: {[tool.name for tool in tools]}")
+```
+
+### 📊 Debugging LangGraph
+
+```python
+# Streaming de execução
 async for event in graph.astream(input_data):
-    print(f"Node: {list(event.keys())[0]}")
-    # Processar evento...
+    node_name = list(event.keys())[0]
+    node_data = event[node_name]
+    print(f"📍 Node: {node_name}")
+    print(f"📊 Data: {node_data}")
+
+# Visualização do grafo
+graph.get_graph().print_ascii()
 ```
 
-### Tratamento de Erros
+### ⚠️ Problemas Comuns e Soluções
 
-**Problemas comuns:**
-1. **NPX não encontrado**: Instalar Node.js
-2. **Context7 timeout**: Verificar conectividade de rede
-3. **OpenAI API**: Verificar chave e limites
-4. **MCP Connection**: Verificar processo stdio
+| Problema | Sintoma | Solução |
+|----------|---------|---------|
+| **NPX não encontrado** | `command not found: npx` | Instalar Node.js |
+| **Context7 timeout** | `Connection timeout` | Verificar conectividade |
+| **OpenAI API Error** | `401 Unauthorized` | Verificar `OPENAI_API_KEY` |
+| **MCP Connection** | `stdio connection failed` | Verificar processo NPX |
+| **Streamlit Error** | `ModuleNotFoundError` | `pip install streamlit` |
 
-**Soluções:**
 ```bash
-# Verificar NPX
-which npx
-
-# Testar Context7 manualmente
-npx @upstash/context7-mcp
-
-# Debug de conexão MCP
-export MCP_DEBUG=1
-python crewai_mcp_agent.py
+# Script de diagnóstico
+echo "🔍 Diagnóstico MCP A2A"
+echo "Node.js: $(node --version 2>/dev/null || echo 'FALTANDO')"
+echo "NPX: $(npx --version 2>/dev/null || echo 'FALTANDO')"
+echo "Context7: $(npx -y @upstash/context7-mcp@latest --help 2>/dev/null | head -1 || echo 'ERRO')"
+echo "OpenAI: ${OPENAI_API_KEY:0:10}... $([ -n "$OPENAI_API_KEY" ] && echo 'OK' || echo 'FALTANDO')"
 ```
 
-## 💡 Casos de Uso
+## 🔬 Extensões e Experimentos
 
-### Ideal para MCP Agent-to-Agent:
+### 🚀 Múltiplos Servidores MCP
 
-1. **Análise de Documentação**:
-   - APIs complexas
-   - Frameworks e bibliotecas
-   - Configurações técnicas
-
-2. **Consultoria Técnica**:
-   - Troubleshooting
-   - Best practices
-   - Architecture guidance
-
-3. **Desenvolvimento Assistido**:
-   - Code generation
-   - Configuration templates
-   - Integration examples
-
-4. **Knowledge Management**:
-   - Technical wikis
-   - Process documentation
-   - Training materials
-
-## 🔗 Extensões e Integrações
-
-### Outros Servidores MCP
-
-**Exemplos de integração:**
 ```python
-# Múltiplos servidores MCP
-client = MultiServerMCPClient({
+# Configuração multi-servidor
+servers = {
     "context7": {
         "command": "npx",
-        "args": ["-y", "@upstash/context7-mcp"]
+        "args": ["-y", "@upstash/context7-mcp@latest"]
     },
     "filesystem": {
-        "command": "mcp-server-filesystem",
+        "command": "mcp-server-filesystem", 
         "args": ["/path/to/docs"]
     },
     "database": {
         "command": "mcp-server-sqlite",
-        "args": ["database.db"]
+        "args": ["knowledge.db"]
     }
-})
+}
 ```
 
-### Custom MCP Servers
+### 🧪 Custom MCP Server
 
-**Criar servidor MCP customizado:**
 ```python
 from fastmcp import FastMCP
 
-mcp = FastMCP("custom-server")
+# Servidor MCP customizado
+mcp = FastMCP("custom-knowledge-server")
 
 @mcp.tool()
-async def custom_tool(query: str) -> str:
-    # Implementar funcionalidade customizada
-    return "Custom response"
+async def knowledge_search(query: str, domain: str) -> str:
+    """Busca conhecimento em domínio específico"""
+    # Implementar lógica customizada
+    return f"Knowledge about {query} in {domain}"
+
+@mcp.tool() 
+async def code_analysis(code: str, language: str) -> str:
+    """Analisa código fonte"""
+    # Implementar análise de código
+    return f"Analysis of {language} code"
 
 if __name__ == "__main__":
-    mcp.run()
+    mcp.run(transport="sse", port=8005)
 ```
 
-## 🧪 Experimentos Futuros
+### 🔗 Integração Avançada
 
-### Técnicas Avançadas
+```python
+# Pipeline multi-agente com MCP
+class AdvancedMCPPipeline:
+    def __init__(self):
+        self.context7 = self._init_context7()
+        self.custom_server = self._init_custom()
+        self.orchestrator = self._init_orchestrator()
+    
+    async def process_complex_query(self, query: str):
+        # 1. Análise inicial com Context7
+        context = await self.context7.search(query)
+        
+        # 2. Processamento customizado
+        analysis = await self.custom_server.analyze(context)
+        
+        # 3. Orquestração final
+        result = await self.orchestrator.synthesize(analysis)
+        
+        return result
+```
 
-1. **Multi-Agent MCP**:
-   - Agentes especializados
-   - Orquestração distribuída
-   - Load balancing
+## 🏆 Resultados de Aprendizado
 
-2. **MCP Chaining**:
-   - Pipeline de servidores
-   - Transformação de dados
-   - Workflows complexos
+Após completar este módulo, você será capaz de:
 
-3. **Hybrid Architectures**:
-   - Local + Remote MCP
-   - Cache intelligent
-   - Fallback strategies
+### 🎯 Conceitos Fundamentais
+✅ **Compreender** protocolos de comunicação inter-agentes  
+✅ **Implementar** agentes MCP com diferentes frameworks  
+✅ **Orquestrar** workflows multi-agente complexos  
+✅ **Debuggar** sistemas distribuídos de IA  
 
-4. **Security & Privacy**:
-   - Authentication
-   - Data encryption
-   - Audit logging
+### 🛠️ Habilidades Técnicas
+✅ **Integrar** Context7 MCP com CrewAI/LangChain/LangGraph  
+✅ **Criar** interfaces web e CLI para agentes  
+✅ **Configurar** servidores MCP customizados  
+✅ **Monitorar** execução de workflows com observabilidade  
 
-## 📚 Conceitos Demonstrados
+### 🚀 Aplicações Práticas
+✅ **Desenvolver** assistentes de documentação inteligentes  
+✅ **Construir** sistemas de consultoria técnica automatizada  
+✅ **Implementar** pipelines de análise de conhecimento  
+✅ **Escalar** soluções para múltiplos domínios  
 
-- **Protocol standardization**: MCP como padrão de comunicação
-- **Agent orchestration**: Coordenação entre agentes
-- **Tool integration**: Integração transparente de ferramentas
-- **Asynchronous processing**: Comunicação assíncrona
-- **State management**: Gestão de estado complexo
-- **Workflow visualization**: Monitoramento visual
-- **Error handling**: Tratamento robusto de erros
-- **Scalable architecture**: Arquitetura extensível
+## 🔮 Técnicas Futuras e Pesquisa
 
-## 🔗 Integração com outros módulos
+### 🧪 Experimentação Avançada
 
-- **02-frameworks**: MCP como middleware entre frameworks
-- **03-prompt-engineering**: Prompts especializados para MCP
-- **04-RAG**: MCP servers como fontes de conhecimento
-- **05-memory**: Compartilhamento de memória via MCP
+1. **🌐 Multi-Protocol Integration**
+   ```python
+   # Combinação MCP + WebSocket + HTTP
+   hybrid_agent = HybridProtocolAgent([
+       MCPConnection("context7"),
+       WebSocketConnection("realtime-data"),
+       HTTPConnection("external-api")
+   ])
+   ```
+
+2. **🔄 Agent Chaining**
+   ```python
+   # Cadeia de processamento
+   chain = AgentChain([
+       ResearchAgent(mcp="context7"),
+       AnalysisAgent(mcp="custom-analyzer"), 
+       SynthesisAgent(mcp="knowledge-base"),
+       ValidationAgent(mcp="fact-checker")
+   ])
+   ```
+
+3. **🎛️ Dynamic Orchestration**
+   ```python
+   # Orquestração adaptativa
+   orchestrator = DynamicOrchestrator()
+   orchestrator.add_strategy("technical_docs", context7_strategy)
+   orchestrator.add_strategy("business_analysis", multi_agent_strategy)
+   orchestrator.auto_route(query)
+   ```
+
+### 🔬 Áreas de Pesquisa
+
+- **Performance Optimization**: Cache inteligente, lazy loading
+- **Security & Privacy**: Autenticação, criptografia de dados
+- **Fault Tolerance**: Recovery automático, circuit breakers
+- **Scalability**: Load balancing, distributed processing
+- **Interoperability**: Cross-platform, cross-protocol
+
+## 📚 Recursos Adicionais
+
+### 📖 Documentação Oficial
+- **MCP Specification**: https://modelcontextprotocol.io/
+- **Context7 Docs**: https://context7.upstash.com/
+- **CrewAI Docs**: https://docs.crewai.com/
+- **LangChain MCP**: https://python.langchain.com/docs/integrations/tools/mcp/
+- **LangGraph Docs**: https://langchain-ai.github.io/langgraph/
+
+### 🎥 Recursos de Aprendizado
+- **MCP Protocol Deep Dive**: Specifications e exemplos
+- **Agent Communication Patterns**: Melhores práticas
+- **Debugging Distributed Systems**: Técnicas avançadas
+- **Performance Tuning**: Otimização de workflows
+
+### 🛠️ Ferramentas Complementares
+- **MCP Inspector**: Debug visual de protocolos
+- **Agent Monitor**: Observabilidade de agentes
+- **Workflow Visualizer**: Grafos de execução
+- **Performance Profiler**: Análise de performance
+
+## 🤝 Contribuição e Desenvolvimento
+
+### 🔧 Desenvolvimento Local
+
+```bash
+# Setup desenvolvimento
+git clone <seu-repo>
+cd 06-MCP-A2A
+
+# Ambiente virtual
+python -m venv .venv
+source .venv/bin/activate
+
+# Dependências development
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# Testes
+pytest tests/
+```
+
+### 📝 Estrutura de Contribuição
+
+```
+06-MCP-A2A/
+├── tests/                    # Testes automatizados
+│   ├── test_crewai_agent.py
+│   ├── test_langchain_agent.py
+│   └── test_langgraph_workflow.py
+├── docs/                     # Documentação adicional
+│   ├── architecture.md
+│   ├── deployment.md
+│   └── troubleshooting.md
+├── examples/                 # Exemplos adicionais
+│   ├── custom_mcp_server.py
+│   ├── multi_server_setup.py
+│   └── production_config.py
+└── utils/                    # Utilitários compartilhados
+    ├── mcp_helpers.py
+    ├── logging_config.py
+    └── performance_monitor.py
+```
+
+### 🎯 Roadmap de Melhorias
+
+- [ ] **Interface Gráfica**: Dashboard para monitoramento
+- [ ] **Métricas Avançadas**: Performance e qualidade
+- [ ] **Templates**: Configurações pré-definidas
+- [ ] **CI/CD**: Pipeline de deployment automático
+- [ ] **Docker**: Containerização completa
+- [ ] **Kubernetes**: Orquestração em cluster
+
+---
+
+## 🎉 Conclusão
+
+Este módulo demonstra como **Model Context Protocol** revoluciona a comunicação entre agentes de IA, criando sistemas:
+
+🌟 **Interoperáveis** - Protocolos padronizados  
+🌟 **Escaláveis** - Arquitetura distribuída  
+🌟 **Observáveis** - Monitoramento completo  
+🌟 **Extensíveis** - Fácil adição de novos agentes  
+
+**🚀 Próximos Passos:** 
+- Explore **04-RAG** para ver como integrar conhecimento via MCP
+- Experimente criar seus próprios servidores MCP customizados
+- Combine multiple frameworks para workflows híbridos
+
+---
+
+**💡 Dica:** Comece com **CrewAI** para protótipos rápidos, evolua para **LangChain** para integrações, e use **LangGraph** para workflows complexos!

@@ -60,8 +60,6 @@ class StateSuporteSimples(TypedDict):
 
 
 # === UTILITÁRIOS SIMPLES ===
-
-
 def criar_estado_inicial(query: str) -> StateSuporteSimples:
     """Cria estado inicial com valores padrão"""
     return StateSuporteSimples(
@@ -75,11 +73,6 @@ def criar_estado_inicial(query: str) -> StateSuporteSimples:
     )
 
 
-def deve_escalar(state: StateSuporteSimples) -> bool:
-    """Verifica se deve escalar (regra simples)"""
-    return state["sentiment"] == SentimentType.NEGATIVE
-
-
 def get_resumo_estado(state: StateSuporteSimples) -> Dict[str, Any]:
     """Retorna resumo do estado para logs"""
     return {
@@ -91,25 +84,3 @@ def get_resumo_estado(state: StateSuporteSimples) -> Dict[str, Any]:
         "agent_used": state["agent_used"],
         "escalated": state["escalated"],
     }
-
-
-# === EXEMPLO DE USO ===
-
-if __name__ == "__main__":
-    # Criar estado de exemplo
-    estado = criar_estado_inicial("Não consigo fazer login")
-
-    # Simular análise
-    estado["category"] = CategoryType.TECHNICAL
-    estado["sentiment"] = SentimentType.NEGATIVE
-
-    # Verificar se deve escalar
-    if deve_escalar(estado):
-        estado["escalated"] = True
-        estado["agent_used"] = AgentType.ESCALACAO
-
-    # Ver resumo
-    print("Resumo do Estado:")
-    resumo = get_resumo_estado(estado)
-    for key, value in resumo.items():
-        print(f"  {key}: {value}")
