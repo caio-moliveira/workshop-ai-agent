@@ -23,9 +23,7 @@ Este projeto demonstra conceitos fundamentais de sistemas multi-agente:
 
 ### Fluxo de Processamento
 
-[![Workflow Diagram](src/graph/workflow_diagram.png)](https://github.com/caio-moliveira/workshop-ai-agent/blob/main/assets/langsmith.png)
-
-O diagrama acima mostra o fluxo real gerado pelo LangGraph, demonstrando como as consultas fluem entre os agentes especializados.
+O diagrama abaixo mostra o fluxo real gerado pelo LangGraph, demonstrando como as consultas fluem entre os agentes especializados.
 
 ```mermaid
 graph TD
