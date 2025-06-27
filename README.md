@@ -8,8 +8,9 @@
   **Workshop prático e abrangente sobre desenvolvimento de agentes de IA**  
   *Cobrindo desde frameworks básicos até técnicas avançadas de comunicação entre agentes*
   
-  [![Workshop](https://img.shields.io/badge/Workshop-Agentes%20de%20IA-blue?style=for-the-badge)](https://suajornadadedados.com.br/workshop-agentes-ia-python/)
-  [![Python](https://img.shields.io/badge/Python-3.12+-green?style=for-the-badge&logo=python)](https://python.org)
+[![Workshop](https://img.shields.io/badge/Workshop-Agentes%20de%20IA-blue?style=for-the-badge)](https://suajornadadedados.com.br/workshop-agentes-ia-python/)
+[![Python](https://img.shields.io/badge/Python-3.12+-green?style=for-the-badge&logo=python)](https://python.org)
+[![OpenAI](https://img.shields.io/badge/OpenAI-API-lightgrey?style=for-the-badge&logo=openai)](https://openai.com/)
   
 </div>
 

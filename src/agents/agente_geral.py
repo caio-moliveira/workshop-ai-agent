@@ -1,132 +1,78 @@
-"""
-Agente Geral - Sistema de Suporte Multi-Agente
-Especializado em atendimento geral e informações da empresa
-"""
-
-from typing import Dict, Any
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+from utils.state import StateSuporteSimples
+
+# --- Base de Conhecimento da Empresa ---
+
+INFO_EMPRESA = {
+    "horario_funcionamento": "Nosso horário de funcionamento é de Segunda a Sexta, das 8h às 18h, e aos Sábados, das 9h às 14h.",
+    "contato": "Você pode nos contatar pelo telefone (11) 1234-5678 ou pelo e-mail suporte@empresa.com.",
+    "endereco": "Nosso escritório fica na Rua Exemplo, 123 - São Paulo, SP.",
+    "garantia": "Oferecemos garantia de 12 meses para produtos físicos e 30 dias para serviços digitais.",
+    "entrega": "O prazo de entrega padrão para todo o Brasil é de 5 a 10 dias úteis.",
+}
+
+# --- Ferramentas do Agente Geral ---
 
 
+@tool
+def buscar_informacao_empresa(tipo_info: str) -> str:
+    """
+    Busca informações gerais sobre a empresa, como horário, contato, endereço, garantia ou entrega.
+
+    Args:
+        tipo_info: O tipo de informação que o cliente quer (e.g., 'horario', 'contato', 'endereco', 'garantia', 'entrega').
+
+    Returns:
+        str: A informação solicitada ou uma mensagem de que a informação não foi encontrada.
+    """
+    info_lower = tipo_info.lower()
+    for key in INFO_EMPRESA:
+        if info_lower in key:
+            return INFO_EMPRESA[key]
+
+    if "funcionamento" in info_lower:
+        return INFO_EMPRESA["horario_funcionamento"]
+
+    return "Desculpe, não encontrei essa informação específica. Posso ajudar com horários, contato, endereço, garantia ou entrega."
+
+
+# --- Lista de Tools do Agente Geral ---
+geral_tools = [
+    buscar_informacao_empresa,
+]
+
+# --- Prompt do Sistema ---
+geral_prompt = """
+Você é um atendente de suporte geral, responsável por fornecer informações sobre a empresa de forma cordial e prestativa.
+
+Seu trabalho é usar a ferramenta `buscar_informacao_empresa` para responder às perguntas dos clientes sobre informações gerais da empresa.
+
+Seja sempre cordial, prestativo e profissional. Mantenha um tom amigável e responda diretamente à pergunta do cliente usando a informação obtida pela ferramenta.
+
+Você tem acesso à seguinte ferramenta:
+- buscar_informacao_empresa: Busca informações gerais sobre horários, contato, endereço, garantia e entrega
+
+CORE RESPONSIBILITIES:
+- Fornecer informações gerais sobre a empresa
+- Esclarecer horários de funcionamento
+- Informar formas de contato
+- Explicar políticas de garantia e entrega
+- Manter tom cordial e amigável
+"""
+
+
+# --- Classe do Agente Geral ---
 class AgenteGeral:
     """
-    Agente especializado em atendimento geral:
-    - Informações sobre a empresa
-    - Horários de funcionamento
-    - Políticas gerais
-    - Dúvidas sobre produtos/serviços
+    Agente Geral usando create_react_agent - versão minimalista.
     """
 
-    def __init__(self, model_name: str = "gpt-3.5-turbo"):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.4)
-        # Base de conhecimento da empresa
-        self.info_empresa = {
-            "horario_funcionamento": "Segunda a Sexta: 8h às 18h, Sábado: 9h às 14h",
-            "telefone": "(11) 1234-5678",
-            "email": "suporte@empresa.com",
-            "endereco": "Rua Exemplo, 123 - São Paulo, SP",
-            "politica_privacidade": "Disponível em nosso site na seção legal",
-            "garantia": "12 meses para produtos físicos, 30 dias para digitais",
-            "entrega": "5-10 dias úteis para todo o Brasil",
-        }
-
-    def buscar_informacao_empresa(self, tipo_info: str) -> str:
-        """
-        Busca informações específicas da empresa
-        """
-        info_lower = tipo_info.lower()
-
-        if "horario" in info_lower or "funcionamento" in info_lower:
-            return self.info_empresa["horario_funcionamento"]
-        elif "telefone" in info_lower or "contato" in info_lower:
-            return f"Telefone: {self.info_empresa['telefone']}, Email: {self.info_empresa['email']}"
-        elif "endereco" in info_lower or "endereço" in info_lower:
-            return self.info_empresa["endereco"]
-        elif "garantia" in info_lower:
-            return self.info_empresa["garantia"]
-        elif "entrega" in info_lower or "prazo" in info_lower:
-            return self.info_empresa["entrega"]
-        else:
-            return "Informação geral da empresa disponível"
-
-    def processar_consulta_geral(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processa consultas gerais sobre a empresa
-        """
-        query = state["query"]
-
-        # Busca informação relevante
-        info_empresa = self.buscar_informacao_empresa(query)
-
-        prompt = ChatPromptTemplate.from_template(
-            """
-            Você é um atendente especializado em informações gerais da empresa. Seja cordial, prestativo e informativo.
-            
-            Consulta do cliente: {query}
-            
-            Informações da empresa: {empresa_info}
-            
-            Forneça uma resposta que:
-            1. Responda diretamente à pergunta
-            2. Inclua informações relevantes da empresa
-            3. Seja cordial e profissional
-            4. Ofereça ajuda adicional se necessário
-            
-            Mantenha um tom amigável e prestativo.
-            """
+    def __init__(self):
+        self.agent = create_react_agent(
+            model=ChatOpenAI(model="gpt-4o-mini", temperature=0.4),
+            tools=geral_tools,
+            prompt=geral_prompt,
+            state_schema=StateSuporteSimples,
         )
-
-        chain = prompt | self.llm
-        resposta = chain.invoke({"query": query, "empresa_info": info_empresa}).content
-
-        return {
-            "response": resposta,
-            "agent_used": "Agente Geral",
-            "info_type": "general",
-        }
-
-    def identificar_tipo_informacao(self, query: str) -> str:
-        """
-        Identifica que tipo de informação o cliente está buscando
-        """
-        query_lower = query.lower()
-
-        if any(
-            word in query_lower
-            for word in ["horario", "funcionamento", "aberto", "fechado"]
-        ):
-            return "horarios"
-        elif any(
-            word in query_lower for word in ["contato", "telefone", "email", "falar"]
-        ):
-            return "contato"
-        elif any(
-            word in query_lower
-            for word in ["endereco", "endereço", "localização", "onde"]
-        ):
-            return "endereco"
-        elif any(
-            word in query_lower for word in ["produto", "serviço", "oferece", "vende"]
-        ):
-            return "produtos"
-        elif any(
-            word in query_lower
-            for word in ["politica", "política", "termos", "privacidade"]
-        ):
-            return "politicas"
-        else:
-            return "geral"
-
-    def sugerir_outras_informacoes(self, state: Dict[str, Any]) -> Dict[str, str]:
-        """
-        Sugere outras informações que podem ser úteis
-        """
-        sugestoes = {
-            "horarios": "Horários de funcionamento",
-            "contato": "Formas de contato",
-            "produtos": "Informações sobre produtos",
-            "garantia": "Políticas de garantia",
-            "entrega": "Prazos de entrega",
-        }
-
-        return {"sugestoes": sugestoes}

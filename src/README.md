@@ -2,6 +2,12 @@
 
 Um projeto educacional demonstrando como múltiplos agentes especializados trabalham em conjunto usando **LangGraph** para criar um sistema inteligente de atendimento ao cliente.
 
+[![LangChain](https://img.shields.io/badge/LangChain-Framework-blue?style=for-the-badge&logo=langchain)](https://www.langchain.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Multi--Agent-orange?style=for-the-badge&logo=langchain)](https://langchain-ai.github.io/langgraph/)
+[![LangSmith](https://img.shields.io/badge/LangSmith-Tracing-purple?style=for-the-badge&logo=langchain)](https://www.langchain.com/langsmith)
+[![OpenAI](https://img.shields.io/badge/OpenAI-API-lightgrey?style=for-the-badge&logo=openai)](https://openai.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-Database-yellow?style=for-the-badge&logo=sqlite)](https://www.sqlite.org/index.html)
+
 ## 🎯 Objetivo
 
 Este projeto demonstra conceitos fundamentais de sistemas multi-agente:

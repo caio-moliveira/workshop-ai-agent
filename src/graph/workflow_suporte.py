@@ -1,6 +1,6 @@
 """
 Workflow de Suporte Multi-Agente usando LangGraph
-Adaptado para funcionar com a estrutura do projeto
+Versão simplificada e estável para fins educacionais
 """
 
 from typing import Dict, Any
@@ -14,28 +14,21 @@ from utils.state import (
     AgentType,
     criar_estado_inicial,
 )
-from agents.agente_coordenador import AgenteCoordenador
-from agents.agente_tecnico import AgenteTecnico
-from agents.agente_financeiro import AgenteFinanceiro
-from agents.agente_geral import AgenteGeral
-from langsmith import traceable
+from agents.agente_coordenador import categorizar_consulta, analisar_sentimento
+from agents.agente_tecnico import buscar_solucao_tecnica, avaliar_complexidade_tecnica
+from agents.agente_financeiro import consultar_politica_financeira, calcular_reembolso
+from agents.agente_geral import buscar_informacao_empresa
 
 
 class WorkflowSuporteMultiAgente:
-    """Workflow principal que coordena todos os agentes"""
+    """Workflow principal usando tools diretamente - versão educacional simplificada"""
 
     def __init__(self):
-        # Inicializar agentes
-        self.coordenador = AgenteCoordenador()
-        self.agente_tecnico = AgenteTecnico()
-        self.agente_financeiro = AgenteFinanceiro()
-        self.agente_geral = AgenteGeral()
-
         # Criar workflow
         self.app = self._criar_workflow()
 
     def _criar_workflow(self) -> StateGraph:
-        """Cria workflow simples e direto"""
+        """Cria workflow simplificado usando tools diretamente"""
         workflow = StateGraph(StateSuporteSimples)
 
         # === NÓSAÇÕES ===
@@ -78,68 +71,130 @@ class WorkflowSuporteMultiAgente:
         print("🚀 Inicializando processamento...")
         return {**state, "timestamp": datetime.now().isoformat()}
 
-    @traceable(name="Coordenador_Categorizar", tags=["coordenador", "analise"])
     def _categorizar(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Categoriza consulta usando o Coordenador"""
+        """Categoriza consulta usando tool de categorização diretamente"""
         print("🎯 Categorizando consulta...")
-        resultado = self.coordenador.categorizar_consulta(state)
-        print(f"📂 Categoria identificada: {resultado.get('category', 'Unknown')}")
-        return {**state, **resultado}
 
-    @traceable(name="Coordenador_Sentimento", tags=["coordenador", "analise"])
+        # Usar tool de categorização diretamente
+        query = state["query"]
+        categoria = categorizar_consulta.invoke({"query": query})
+
+        print(f"📂 Categoria identificada: {categoria}")
+        return {**state, "category": categoria}
+
     def _analisar_sentimento(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Analisa sentimento usando o Coordenador"""
+        """Analisa sentimento usando tool de sentimento diretamente"""
         print("😊 Analisando sentimento...")
-        resultado = self.coordenador.analisar_sentimento(state)
-        print(f"💭 Sentimento detectado: {resultado.get('sentiment', 'Unknown')}")
-        return {**state, **resultado}
 
-    @traceable(name="Agente_Tecnico", tags=["tecnico", "resolucao"])
+        # Usar tool de sentimento diretamente
+        query = state["query"]
+        sentimento = analisar_sentimento.invoke({"query": query})
+
+        print(f"💭 Sentimento detectado: {sentimento}")
+        return {**state, "sentiment": sentimento}
+
     def _processar_tecnico(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Processa com Agente Técnico"""
+        """Processa com ferramentas técnicas diretamente"""
         print("🔧 Processando com Agente Técnico...")
-        resultado = self.agente_tecnico.processar_consulta_tecnica(state)
+
+        query = state["query"]
+
+        # Usar tools técnicas diretamente
+        solucao = buscar_solucao_tecnica.invoke({"problema": query})
+        complexidade = avaliar_complexidade_tecnica.invoke({"query": query})
+
+        # Criar resposta baseada nas tools
+        if complexidade == "escalate":
+            resposta = f"⚠️ Este problema será escalado para um especialista de nível 2.\n\n{solucao}"
+            escalado = True
+        else:
+            resposta = f"🔧 Solução técnica encontrada:\n\n{solucao}"
+            escalado = False
+
         print("✅ Solução técnica gerada")
-        return {**state, **resultado, "agent_used": AgentType.TECNICO}
+        return {
+            **state,
+            "response": resposta,
+            "agent_used": AgentType.TECNICO,
+            "escalated": escalado,
+        }
 
-    @traceable(name="Agente_Financeiro", tags=["financeiro", "cobranca"])
     def _processar_financeiro(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Processa com Agente Financeiro"""
+        """Processa com ferramentas financeiras diretamente"""
         print("💰 Processando com Agente Financeiro...")
-        resultado = self.agente_financeiro.processar_consulta_financeira(state)
+
+        query = state["query"]
+
+        # Usar tools financeiras diretamente
+        if "reembolso" in query.lower() or "estorno" in query.lower():
+            politica = consultar_politica_financeira.invoke(
+                {"tipo_consulta": "reembolso"}
+            )
+            resposta = f"💰 Política de Reembolso:\n\n{politica}\n\nSe precisar calcular um valor específico, por favor informe o valor da compra e há quantos dias foi realizada."
+        elif "pagamento" in query.lower():
+            politica = consultar_politica_financeira.invoke(
+                {"tipo_consulta": "pagamento"}
+            )
+            resposta = f"💳 Formas de Pagamento:\n\n{politica}"
+        else:
+            # Consulta geral financeira
+            politica = consultar_politica_financeira.invoke({"tipo_consulta": query})
+            resposta = f"💰 Informação Financeira:\n\n{politica}"
+
         print("✅ Resposta financeira gerada")
-        return {**state, **resultado, "agent_used": AgentType.FINANCEIRO}
+        return {
+            **state,
+            "response": resposta,
+            "agent_used": AgentType.FINANCEIRO,
+            "escalated": False,
+        }
 
-    @traceable(name="Agente_Geral", tags=["geral", "informacoes"])
     def _processar_geral(self, state: StateSuporteSimples) -> StateSuporteSimples:
-        """Processa com Agente Geral"""
+        """Processa com ferramentas gerais diretamente"""
         print("ℹ️ Processando com Agente Geral...")
-        resultado = self.agente_geral.processar_consulta_geral(state)
-        print("✅ Informações gerais fornecidas")
-        return {**state, **resultado, "agent_used": AgentType.GERAL}
 
-    # === ROTEAMENTO ===
+        query = state["query"]
+
+        # Usar tool geral diretamente
+        informacao = buscar_informacao_empresa.invoke({"tipo_info": query})
+        resposta = f"ℹ️ Informação da Empresa:\n\n{informacao}"
+
+        print("✅ Informações gerais fornecidas")
+        return {
+            **state,
+            "response": resposta,
+            "agent_used": AgentType.GERAL,
+            "escalated": False,
+        }
 
     def _rotear_agente(self, state: StateSuporteSimples) -> str:
         """Determina qual agente deve processar a consulta"""
 
         # Rotear por categoria
         category = state.get("category", CategoryType.GENERAL)
-        print(f"🎯 Roteando para agente baseado na categoria: {category}")
+        sentiment = state.get("sentiment", "Neutral")
 
-        if category == CategoryType.TECHNICAL:
+        print(
+            f"🎯 Roteando baseado em - Categoria: {category}, Sentimento: {sentiment}"
+        )
+
+        if sentiment == "Negative":
+            print("⚠️ Sentimento negativo detectado - processando com atenção especial")
+
+        # Roteamento baseado na categoria
+        if category == "Technical":
             return "agent_tecnico"
-        elif category == CategoryType.BILLING:
+        elif category == "Billing":
             return "agent_financeiro"
         else:
             return "agent_geral"
 
     # === INTERFACE PÚBLICA ===
 
-    @traceable(name="Workflow_MultiAgente", tags=["workflow", "orquestracao"])
     def processar_consulta(self, query: str) -> Dict[str, Any]:
         """
         Interface principal para processar uma consulta
+        Versão simplificada usando tools diretamente
         """
         print(f"\n🎯 Processando consulta: '{query[:50]}...'")
 
@@ -169,11 +224,11 @@ class WorkflowSuporteMultiAgente:
 def criar_workflow() -> WorkflowSuporteMultiAgente:
     """
     Função helper para criar e configurar o workflow
-    Compatível com o main.py
+    Versão simplificada e estável
     """
-    print("🔧 Criando workflow multi-agente...")
+    print("🔧 Criando workflow multi-agente refatorado...")
     workflow = WorkflowSuporteMultiAgente()
-    print("✅ Workflow criado com sucesso!")
+    print("✅ Workflow criado com agentes refatorados!")
 
     # Gerar visualização do grafo
     try:

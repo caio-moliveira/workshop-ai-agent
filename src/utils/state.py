@@ -1,11 +1,13 @@
 """
-Estado Simples para o Sistema de Suporte Multi-Agente
-Apenas o essencial para demonstração educacional
+Estado Corrigido para o Sistema de Suporte Multi-Agente
+Compatível com create_react_agent
 """
 
-from typing import Dict, Any, TypedDict
+from typing import Dict, Any, TypedDict, List
 from datetime import datetime
 from enum import Enum
+from langchain_core.messages import BaseMessage
+from langgraph.graph.message import add_messages
 
 
 # === ENUMS BÁSICOS ===
@@ -37,32 +39,38 @@ class AgentType(str, Enum):
     ESCALACAO = "Escalação"
 
 
-# === ESTADO PRINCIPAL ===
+# === ESTADO PRINCIPAL COMPATÍVEL COM create_react_agent ===
 
 
 class StateSuporteSimples(TypedDict):
-    """Estado simples para demonstração do sistema multi-agente"""
+    """Estado compatível com create_react_agent e MessagesState"""
 
-    # Entrada
+    # Campos obrigatórios para create_react_agent
+    messages: List[BaseMessage]
+    remaining_steps: int
+
+    # Campos customizados para nosso sistema
     query: str
     timestamp: str
-
-    # Análise do Coordenador
     category: CategoryType
     sentiment: SentimentType
-
-    # Resposta
     response: str
     agent_used: AgentType
-
-    # Controle simples
     escalated: bool
 
 
-# === UTILITÁRIOS SIMPLES ===
+# === UTILITÁRIOS ===
+
+
 def criar_estado_inicial(query: str) -> StateSuporteSimples:
-    """Cria estado inicial com valores padrão"""
+    """Cria estado inicial compatível com create_react_agent"""
+    from langchain_core.messages import HumanMessage
+
     return StateSuporteSimples(
+        # Campos obrigatórios para create_react_agent
+        messages=[HumanMessage(content=query)],
+        remaining_steps=10,  # Número máximo de iterações ReAct
+        # Campos customizados
         query=query,
         timestamp=datetime.now().isoformat(),
         category=CategoryType.GENERAL,

@@ -10,34 +10,38 @@ from graph.workflow_suporte import criar_workflow
 # Carregar variáveis de ambiente
 load_dotenv()
 
+# Configurar OpenAI API Key
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+
+# Verificar se API key está configurada
+if not os.getenv("OPENAI_API_KEY"):
+    print("❌ ERRO: OPENAI_API_KEY não encontrada no arquivo .env")
+    exit(1)
+
 # Configurar LangSmith
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
 os.environ["LANGCHAIN_PROJECT"] = os.getenv(
-    "LANGSMITH_PROJECT", "pr-dependable-suppression-55"
+    "LANGSMITH_PROJECT", "demo-sistema-multi-agente"
 )
 os.environ["LANGCHAIN_ENDPOINT"] = os.getenv(
     "LANGSMITH_ENDPOINT", "https://api.smith.langchain.com"
 )
 os.environ["LANGSMITH_API_KEY"] = os.getenv("LANGSMITH_API_KEY")
 
-print(f"🔍 LangSmith configurado para projeto: {os.environ['LANGCHAIN_PROJECT']}")
-print(f"🌐 Endpoint: {os.environ['LANGCHAIN_ENDPOINT']}")
-
-# Imports do sistema
-
 
 def main():
-    """Função principal para demonstração"""
+    """Função principal para demonstração educacional"""
 
-    print("\n" + "=" * 60)
     print("🎓 DEMO SISTEMA MULTI-AGENTE")
-    print("🔍 Acompanhe no LangSmith!")
-    print("=" * 60)
+    print("=" * 50)
 
-    # Criar workflow
-    workflow = criar_workflow()
+    try:
+        workflow = criar_workflow()
+    except Exception as e:
+        print(f"❌ Erro ao criar workflow: {e}")
+        return
 
-    # Casos de teste para demonstração
+    # Casos de teste para demonstração educacional
     casos_teste = [
         {
             "query": "Não consigo fazer login no sistema",
@@ -62,40 +66,38 @@ def main():
     ]
 
     # Processar cada caso
+    sucessos = 0
     for i, caso in enumerate(casos_teste, 1):
         print(f"\n📝 CASO {i}: {caso['query']}")
-        print("-" * 50)
 
-        # Processar consulta
-        resultado = workflow.processar_consulta(caso["query"])
+        try:
+            resultado = workflow.processar_consulta(caso["query"])
 
-        # Exibir resultados
-        print(f"📂 Categoria: {resultado['category']}")
-        print(f"😊 Sentimento: {resultado['sentiment']}")
-        print(f"🤖 Agente Usado: {resultado['agent_used']}")
-        print(f"🚨 Escalado: {'Sim' if resultado['escalated'] else 'Não'}")
-        print(f"⏰ Processado em: {resultado['timestamp']}")
-        print(f"💬 Resposta: {resultado['response'][:100]}...")
+            # Verificar se bateu com o esperado
+            esperado = caso["esperado"]
+            categoria_correta = resultado["category"] == esperado.get("categoria")
+            escalacao_correta = resultado["escalated"] == esperado.get(
+                "escalado", False
+            )
 
-        # Verificar se bateu com o esperado
-        esperado = caso["esperado"]
-        if resultado["category"] == esperado.get("categoria"):
-            print("✅ Categoria correta!")
-        if resultado["escalated"] == esperado.get("escalado", False):
-            print("✅ Escalação correta!")
+            if categoria_correta and escalacao_correta:
+                print("✅ Resultado correto!")
+                sucessos += 1
+            else:
+                print(
+                    f"⚠️ Esperado: {esperado.get('categoria')}, Obtido: {resultado['category']}"
+                )
 
-        print()
+        except Exception as e:
+            print(f"❌ Erro no caso {i}: {e}")
 
-    print("=" * 60)
-    print("🎉 DEMONSTRAÇÃO COMPLETA!")
-    print("🔍 Veja os traces em: https://smith.langchain.com")
-    print(f"📁 Projeto: {os.environ['LANGCHAIN_PROJECT']}")
-    print("=" * 60)
+    # Resumo final
+    print(f"\n🎉 Concluído: {sucessos}/{len(casos_teste)} casos corretos")
+    if os.getenv("LANGSMITH_API_KEY"):
+        print(
+            f"🔍 Traces: https://smith.langchain.com (projeto: {os.environ['LANGCHAIN_PROJECT']})"
+        )
 
 
 if __name__ == "__main__":
-    print("🚀 INICIANDO DEMO SISTEMA MULTI-AGENTE")
-    # Executar demonstração principal
     main()
-
-    print("\n🎓 FIM DA DEMONSTRAÇÃO")

@@ -1,100 +1,100 @@
-"""
-Agente Técnico - Sistema de Suporte Multi-Agente
-Especializado em resolver problemas técnicos
-Conectado a MCP para buscar soluções online
-"""
-
-from typing import Dict, Any
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+from utils.state import StateSuporteSimples
+
+# --- Base de Conhecimento Técnico ---
+
+KNOWLEDGE_BASE_TECNICO = {
+    "login": "Verifique se o email e a senha estão corretos e tente redefinir a senha através do link 'Esqueci minha senha'.",
+    "conexao": "Reinicie seu modem e roteador. Verifique também se outros dispositivos na mesma rede estão funcionando.",
+    "erro": "Tente limpar o cache e os cookies do seu navegador e recarregar a página. Se o erro persistir, nos informe o código do erro.",
+    "lentidao": "Feche outros programas ou abas do navegador que não esteja usando e verifique o uso de CPU no gerenciador de tarefas.",
+}
+
+# --- Ferramentas do Agente Técnico ---
 
 
+@tool
+def buscar_solucao_tecnica(problema: str) -> str:
+    """
+    Busca uma solução para um problema técnico na base de conhecimento interna.
+
+    Args:
+        problema: Uma descrição do problema técnico do cliente (e.g., 'login', 'conexao', 'erro', 'lentidao').
+
+    Returns:
+        str: A solução encontrada na base de conhecimento ou uma mensagem indicando que nada foi encontrado.
+    """
+    problema_lower = problema.lower()
+    for keyword, solucao in KNOWLEDGE_BASE_TECNICO.items():
+        if keyword in problema_lower:
+            return f"Solução encontrada: {solucao}"
+    return "Nenhuma solução específica encontrada na base de conhecimento. Por favor, descreva o problema com mais detalhes."
+
+
+@tool
+def avaliar_complexidade_tecnica(query: str) -> str:
+    """
+    Avalia se um problema técnico é muito complexo e precisa ser escalado para um especialista de nível 2.
+
+    Args:
+        query: A consulta completa do cliente.
+
+    Returns:
+        str: Retorna 'escalate' se for complexo, ou 'continue' caso contrário.
+    """
+    palavras_complexas = [
+        "sistema travou",
+        "erro crítico",
+        "dados perdidos",
+        "servidor",
+        "banco de dados",
+    ]
+    query_lower = query.lower()
+    if any(palavra in query_lower for palavra in palavras_complexas):
+        return "escalate"
+    return "continue"
+
+
+# --- Lista de Tools do Agente Técnico ---
+tecnico_tools = [
+    buscar_solucao_tecnica,
+    avaliar_complexidade_tecnica,
+]
+
+# --- Prompt do Sistema ---
+tecnico_prompt = """
+Você é um especialista em suporte técnico. Seu objetivo é resolver problemas dos clientes de forma eficiente e clara.
+
+Siga estes passos:
+1. Primeiro, use a ferramenta `buscar_solucao_tecnica` para ver se existe uma solução pronta na base de conhecimento.
+2. Se uma solução for encontrada, apresente-a ao cliente de forma clara e em formato passo-a-passo.
+3. Use a ferramenta `avaliar_complexidade_tecnica` para verificar se o problema é crítico. Se o resultado for 'escalate', informe ao cliente que o problema será encaminhado para um especialista de nível 2.
+4. Responda sempre de forma técnica, mas acessível.
+
+Você tem acesso às seguintes ferramentas:
+- buscar_solucao_tecnica: Busca soluções na base de conhecimento técnico
+- avaliar_complexidade_tecnica: Avalia se o problema precisa ser escalado
+
+CORE RESPONSIBILITIES:
+- Resolver problemas técnicos dos clientes
+- Fornecer soluções passo-a-passo claras
+- Identificar problemas complexos que precisam de escalação
+- Manter tom profissional e acessível
+"""
+
+
+# --- Classe do Agente Técnico ---
 class AgenteTecnico:
     """
-    Agente especializado em suporte técnico:
-    - Resolve problemas técnicos
-    - Busca soluções em documentação (via MCP)
-    - Fornece instruções passo-a-passo
+    Agente Técnico usando create_react_agent - versão minimalista.
     """
 
-    def __init__(self, model_name: str = "gpt-3.5-turbo"):
-        self.llm = ChatOpenAI(model=model_name, temperature=0.3)
-        self.knowledge_base = {
-            "login": "Verifique suas credenciais e tente redefinir a senha",
-            "conexao": "Verifique sua conexão com a internet e tente novamente",
-            "erro": "Tente limpar o cache do navegador e recarregar a página",
-            "lentidao": "Verifique se há outros programas consumindo recursos",
-        }
-
-    def buscar_solucao_mcp(self, problema: str) -> str:
-        """
-        Simula busca via MCP (Model Context Protocol)
-        Em implementação real, conectaria com servidor MCP de web search
-        """
-        # Simulação de busca MCP
-        problema_lower = problema.lower()
-
-        for keyword, solucao in self.knowledge_base.items():
-            if keyword in problema_lower:
-                return f"[MCP Search] Encontrei: {solucao}"
-
-        return (
-            "[MCP Search] Nenhuma solução específica encontrada na base de conhecimento"
+    def __init__(self):
+        self.agent = create_react_agent(
+            model=ChatOpenAI(model="gpt-4o-mini", temperature=0.3),
+            tools=tecnico_tools,
+            prompt=tecnico_prompt,
+            state_schema=StateSuporteSimples,
         )
-
-    def processar_consulta_tecnica(self, state: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        Processa consultas técnicas e fornece soluções
-        """
-        query = state["query"]
-
-        # Busca solução via MCP
-        solucao_mcp = self.buscar_solucao_mcp(query)
-
-        prompt = ChatPromptTemplate.from_template(
-            """
-            Você é um especialista em suporte técnico. Analise a consulta do cliente e forneça uma solução clara e prática.
-            
-            Consulta do cliente: {query}
-            
-            Informações da base de conhecimento: {mcp_info}
-            
-            Forneça uma resposta estruturada com:
-            1. Diagnóstico do problema
-            2. Solução passo-a-passo
-            3. Informações adicionais se necessário
-            
-            Seja claro, objetivo e técnico, mas acessível.
-            """
-        )
-
-        chain = prompt | self.llm
-        resposta = chain.invoke({"query": query, "mcp_info": solucao_mcp}).content
-
-        return {
-            "response": resposta,
-            "agent_used": "Agente Técnico",
-            "mcp_consulted": True,
-        }
-
-    def avaliar_complexidade(self, state: Dict[str, Any]) -> str:
-        """
-        Avalia se o problema requer escalação
-        """
-        query = state["query"].lower()
-
-        # Palavras que indicam alta complexidade
-        palavras_complexas = [
-            "sistema travou",
-            "erro crítico",
-            "dados perdidos",
-            "não funciona nada",
-            "servidor",
-            "banco de dados",
-        ]
-
-        for palavra in palavras_complexas:
-            if palavra in query:
-                return "escalate"
-
-        return "continue"
