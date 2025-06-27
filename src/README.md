@@ -134,9 +134,6 @@ projeto-raiz/
     │   ├── workflow_suporte.py  # Definição do workflow
     │   └── workflow_diagram.png # Diagrama gerado automaticamente
     │
-    ├── orchestration/            # Coordenação e orquestração
-    │   └── __init__.py          # Módulo Python
-    │
     └── utils/                    # Utilitários
         ├── __init__.py          # Módulo Python
         └── state.py             # Estado compartilhado entre agentes
