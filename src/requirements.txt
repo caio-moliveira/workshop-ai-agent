@@ -22,8 +22,4 @@ openai>=1.0.0
 # === TYPING SUPPORT ===
 # Para melhor suporte a tipos (Python < 3.9)
 typing-extensions>=4.0.0
-
-# === DEVELOPMENT (OPCIONAL) ===
-# Para desenvolvimento em notebooks
-# ipython>=8.0.0
-# jupyter>=1.0.0
+langgraph-checkpoint-sqlite

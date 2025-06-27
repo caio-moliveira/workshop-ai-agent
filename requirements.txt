@@ -34,3 +34,4 @@ langsmith
 tiktoken
 pygraphviz
 langchain-tavily
+langgraph-checkpoint-sqlite

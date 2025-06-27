@@ -18,6 +18,7 @@ from agents.agente_coordenador import categorizar_consulta, analisar_sentimento
 from agents.agente_tecnico import buscar_solucao_tecnica, avaliar_complexidade_tecnica
 from agents.agente_financeiro import consultar_politica_financeira, calcular_reembolso
 from agents.agente_geral import buscar_informacao_empresa
+from memory.workflow_memory import checkpointer
 
 
 class WorkflowSuporteMultiAgente:
@@ -62,7 +63,7 @@ class WorkflowSuporteMultiAgente:
         # Ponto de entrada
         workflow.set_entry_point("inicializar")
 
-        return workflow.compile()
+        return workflow.compile(checkpointer=checkpointer)
 
     # === FUNÇÕES DOS NÓS ===
 
@@ -191,18 +192,22 @@ class WorkflowSuporteMultiAgente:
 
     # === INTERFACE PÚBLICA ===
 
-    def processar_consulta(self, query: str) -> Dict[str, Any]:
+    def processar_consulta(
+        self, query: str, thread_id: str = "demo_session"
+    ) -> Dict[str, Any]:
         """
-        Interface principal para processar uma consulta
-        Versão simplificada usando tools diretamente
+        Interface principal para processar uma consulta com memória
         """
         print(f"\n🎯 Processando consulta: '{query[:50]}...'")
 
         # Estado inicial
         initial_state = criar_estado_inicial(query)
 
-        # Executar workflow
-        result = self.app.invoke(initial_state)
+        # Configuração para usar thread específica (memória)
+        config = {"configurable": {"thread_id": thread_id}}
+
+        # Executar workflow com memória
+        result = self.app.invoke(initial_state, config=config)
 
         print(f"🎉 Processamento concluído por: {result['agent_used']}")
 
@@ -215,6 +220,7 @@ class WorkflowSuporteMultiAgente:
             "agent_used": result["agent_used"],
             "escalated": result["escalated"],
             "timestamp": result["timestamp"],
+            "thread_id": thread_id,  # Incluir thread_id para referência
         }
 
 

@@ -3,6 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
 from utils.state import StateSuporteSimples
+from memory.workflow_memory import checkpointer as default_checkpointer, in_memory_store
 
 # --- Definição das Ferramentas (Tools) ---
 
@@ -153,4 +154,6 @@ class AgenteCoordenador:
             tools=coordenador_tools,
             prompt=coordenador_prompt,
             state_schema=StateSuporteSimples,
+            checkpointer=default_checkpointer,
+            store=in_memory_store,
         )

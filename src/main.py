@@ -71,7 +71,10 @@ def main():
         print(f"\n📝 CASO {i}: {caso['query']}")
 
         try:
-            resultado = workflow.processar_consulta(caso["query"])
+            # Criar thread única para cada caso (simula sessões diferentes)
+            thread_id = f"demo_caso_{i}"
+
+            resultado = workflow.processar_consulta(caso["query"], thread_id)
 
             # Verificar se bateu com o esperado
             esperado = caso["esperado"]
