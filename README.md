@@ -120,7 +120,7 @@ Comunicação padronizada entre agentes:
 
 ## 🏆 [Projeto Final: Sistema Multi-Agente de Suporte](https://www.google.com/search?q=./src/)
 
-Como culminação do aprendizado, o workshop inclui um projeto final prático: a construção de um **Sistema de Suporte ao Cliente Multi-Agente** utilizando **LangGraph**.
+Para o encerramento do aprendizado, o workshop inclui um projeto final prático que aplicando os processos e boas praticas passados no decorrer das sessões. Fizemos a construção de um **Sistema de Suporte ao Cliente Multi-Agente** utilizando **LangGraph** e para observabilidade **LangSmith**
 
 **O que o projeto final aborda:**
 
