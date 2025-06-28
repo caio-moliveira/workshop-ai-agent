@@ -1,20 +1,13 @@
 import os
 import logging
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse, StreamingResponse
 from fastmcp import FastMCP
-import uvicorn
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from langchain_openai import ChatOpenAI
 from crewai import Agent, Task, Crew, Process
 from crewai_tools import MCPServerAdapter
 from mcp import StdioServerParameters
 from crewai.knowledge.source.crew_docling_source import CrewDoclingSource
 from crewai.knowledge.storage.knowledge_storage import KnowledgeStorage
-
-from typing import Iterator
 
 # -----------------------------
 # Setup logging & environment
@@ -23,38 +16,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 load_dotenv()
 
-
-# -----------------------------
-# Request Models
-# -----------------------------
-class ChatMessage(BaseModel):
-    message: str
-    agentType: str = "postgres-analyst"
-
-
 # -----------------------------
 # Initialize FastMCP instance
 # -----------------------------
-fastmcp_instance = FastMCP("postgres-analyst")
-
-# -----------------------------
-# Create parent FastAPI app
-# -----------------------------
-app = FastAPI(title="Postgres Analyst MCP Server", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
-)
+mcp = FastMCP("postgres-analyst")
 
 # -----------------------------
 # Configuration
 # -----------------------------
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://caio:4pYLWgRPVeC0GzfOZq7eAYKE6nWAMoLa@dpg-d0m6njbuibrs7386ajh0-a.oregon-postgres.render.com:5432/dbteachable?sslmode=require",
+    "postgresql://agent:MbDsofpeVAfehfII5H1oVJ13bd37FlLd@dpg-d1fttjvfte5s73fvhtfg-a.oregon-postgres.render.com/workshop_ai_agent?sslmode=require",
 )
 
 # Initialize LLM
@@ -196,83 +168,27 @@ def run_postgres_analyst(question: str, user_id: str = "default") -> str:
 # -----------------------------
 # FastMCP Tool Registration
 # -----------------------------
-@fastmcp_instance.tool(name="postgres-analyst")
+@mcp.tool(name="postgres-analyst")
 def postgres_analyst_tool(question: str, user_id: str = "default") -> str:
-    """MCP tool wrapper for the postgres analyst."""
+    """
+    Analyze PostgreSQL database and answer questions using SQL queries.
+
+    Args:
+        question: The database question to answer
+        user_id: Optional user identifier for tracking
+
+    Returns:
+        SQL query results with analysis and insights
+    """
     return run_postgres_analyst(question, user_id)
 
-
-# -----------------------------
-# API Endpoints
-# -----------------------------
-@app.get("/mcp/")
-async def health_check():
-    """Health check endpoint."""
-    return JSONResponse(
-        {"status": "healthy", "service": "postgres-analyst-mcp", "version": "1.0.0"}
-    )
-
-
-@app.post("/mcp/")
-async def chat_endpoint(request: ChatMessage):
-    """Main chat endpoint for database queries."""
-    try:
-        logger.info(f"Processing query: {request.message[:100]}...")
-
-        # Run the analysis
-        result = run_postgres_analyst(request.message, "web_user")
-
-        # Stream the response
-        def generate_response() -> Iterator[str]:
-            yield result
-
-        return StreamingResponse(
-            generate_response(),
-            media_type="text/plain",
-            headers={"Cache-Control": "no-cache"},
-        )
-
-    except Exception as e:
-        logger.exception(f"Chat endpoint error: {e}")
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
-
-
-@app.get("/mcp/test")
-async def test_connection():
-    """Test endpoint to verify MCP connection."""
-    try:
-        result = run_postgres_analyst("SELECT version();", "test_user")
-        return JSONResponse(
-            {
-                "status": "success",
-                "connection": "verified",
-                "result": result[:200] + "..." if len(result) > 200 else result,
-            }
-        )
-    except Exception as e:
-        return JSONResponse({"status": "error", "message": str(e)}, status_code=500)
-
-
-# -----------------------------
-# Mount FastMCP to main app
-# -----------------------------
-app.mount("/fastmcp", fastmcp_instance.app)
 
 # -----------------------------
 # Server startup
 # -----------------------------
 if __name__ == "__main__":
-    logger.info("Starting Postgres Analyst MCP Server...")
-    logger.info("Endpoints:")
-    logger.info("  - Health: GET http://127.0.0.1:8004/mcp/")
-    logger.info("  - Chat: POST http://127.0.0.1:8004/mcp/")
-    logger.info("  - Test: GET http://127.0.0.1:8004/mcp/test")
-    logger.info("  - FastMCP: http://127.0.0.1:8004/fastmcp/")
+    logger.info("Starting Postgres Analyst MCP Tool...")
+    logger.info("Tool available: postgres-analyst")
 
-    uvicorn.run(
-        "src.mcp_server_db:app",
-        host="127.0.0.1",
-        port=8004,
-        reload=True,
-        log_level="info",
-    )
+    # Run the FastMCP server
+    mcp.run(transport="sse", host="127.0.0.1", port=8004)
