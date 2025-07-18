@@ -118,7 +118,7 @@ if __name__ == "__main__":
     print("1. Instalar Ollama: https://ollama.ai")
     print("2. Baixar um modelo: ollama pull llama3.1:8b")
     print("3. Iniciar Ollama: ollama serve")
-    print("4. Instalar AutoGen: pip install pyautogen")
+    print("4. Instalar AutoGen: pip install ag2")
     print("5. Executar o script!")
     print("\n💡 Vantagens do Ollama:")
     print("   • Funciona totalmente offline")
