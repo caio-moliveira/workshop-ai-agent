@@ -24,10 +24,7 @@ mcp = FastMCP("postgres-analyst")
 # -----------------------------
 # Configuration
 # -----------------------------
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://agent:MbDsofpeVAfehfII5H1oVJ13bd37FlLd@dpg-d1fttjvfte5s73fvhtfg-a.oregon-postgres.render.com/workshop_ai_agent?sslmode=require",
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # Initialize LLM
 llm = ChatOpenAI(
